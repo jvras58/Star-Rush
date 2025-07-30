@@ -122,9 +122,9 @@ end
 
 -- 🎲 Evento aleatório
 function applyEvent(name)
-    if name == "Seca" then
+    if name == "Aurora" then
         scarcity = math.max(0.5, scarcity - 0.1)
-    elseif name == "Aurora" then
+    elseif name == "Seca" then
         scarcity = scarcity + 0.2
     elseif name == "Fiscalização" then
         for player in pairs(tfm.get.room.playerList) do
@@ -173,18 +173,20 @@ end
 
 -- 🧾 Interface
 function updateUI()
-    local text = "<p align='center'><font size='12'><b>🌎 PublicQueijo</b>  "
-    text = text .. string.format("<v>%s</v>  <n>| Rodada: <j>%d</j>  | 🏺 Pote: <j>%d</j>\n", eventName, roundNumber, pot)
+    local text = "<p align='center'><font size='12'><b>Share Cheese</b>  "
+    -- Divide pote pelo número de jogadores
+    qntdIndividual = pot / math.max(1, #tfm.get.room.playerList)
+    text = text .. string.format("<v>%s</v>  <n>| Rodada: <j>%d</j>  | Pote: <j>%d</j> | Individual: <j>%d</j>\n", eventName, roundNumber, pot, qntdIndividual)
     text = text .. "<font size='11'>"
 
     for name in pairs(tfm.get.room.playerList) do
         local pub = bagPublic[name] or 0
         local pri = bagPrivate[name] or 0
-        text = text .. string.format("<n>%s: <vp>%d Público   <o>%d Privado\n", name, pub, pri)
+        text = text .. string.format("<n>%s: <vp>%d Público |  <o>%d Privado\n", name, pub, pri)
     end
 
     ui.addTextArea(0, text, nil, 10, 28, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.8, true)
-    tfm.exec.setUIMapName("<font size='11'><j>PublicQueijo</j> ~ <v>" .. eventName .. "</v>")
+    tfm.exec.setUIMapName("<font size='11'><j>Share Cheese</j> ~ <v>" .. eventName .. "</v>")
 end
 
 -- 👤 Novos jogadores
