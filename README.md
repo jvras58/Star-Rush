@@ -178,6 +178,18 @@ O jogo rotaciona entre 5 mapas diferentes:
 
 Desenvolvido como um experimento cooperativa em jogos multiplayer, explorando conceitos de teoria dos jogos e dilemas de cooperação para a cadeira de Jogos & Dilemas Socias.
 
+
+---
+
+
+## 🔍 Referências Técnicas
+
+* [Faq + Documentação Lua Transformice](https://atelier801.com/topic?f=6&t=897795&p=1#m11)
+* [Editor de Mapa](https://entibo.github.io/miceditor/)
+* [Scripts Exemplo](https://github.com/Nonegustavo/Transformice-Lua-Scripts/tree/master/scripts)
+  
+
+
 ---
 
 **Divirta-se jogando Share Cheese! 🧀✨**
