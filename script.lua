@@ -1,9 +1,9 @@
 --[[
-🧀 SHARE-CHEESE
-
+*** SHARE-CHEESE ***
+Experimento de Cooperacao
 ]]
 
--- ⚙️ Configurações básicas
+-- Configuracoes basicas
 tfm.exec.disableAutoShaman(true)
 tfm.exec.disableAutoNewGame(true)
 tfm.exec.disableAfkDeath(true)
@@ -20,7 +20,7 @@ local nextSpawn = 0
 local eventName = ""
 local roundNumber = 0
 local maxRounds = 12 -- Limite de rodadas
-local events = {"Seca", "Aurora", "Fiscalização", "VazamentoPrivado", "Doação", "Queijofuracão"}
+local events = {"Seca", "Aurora", "Fiscalizacao", "VazamentoPrivado", "Doacao", "Queijofuracao"}
 
 -- 📊 Sistema de coleta de dados
 local gameData = {}
@@ -136,21 +136,21 @@ function init()
     newRound()
 end
 
--- 📚 Sistema de tutorial
+-- Sistema de tutorial
 function showTutorial()
     if roundNumber <= 2 then
-        local tutorialText = "<p align='center'><font size='14'><b>🧀 TUTORIAL - SHARE CHEESE</b></font>\n\n"
+        local tutorialText = "<p align='center'><font size='14'><b>=== TUTORIAL - SHARE CHEESE ===</b></font>\n\n"
         tutorialText = tutorialText .. "<font size='12'>"
         if roundNumber == 1 then
-            tutorialText = tutorialText .. "<j>🟢 QUEIJOS VERDES:</j> Beneficiam todos os jogadores (vão para o pote)\n"
-            tutorialText = tutorialText .. "<o>🟡 QUEIJOS AMARELOS:</o> Apenas para você (coleção privada)\n\n"
-            tutorialText = tutorialText .. "<v>Clique nos queijos ou pressione Q próximo a eles!</v>"
+            tutorialText = tutorialText .. "<j>* QUEIJOS VERDES:</j> Beneficiam todos os jogadores (vao para o pote)\n"
+            tutorialText = tutorialText .. "<o>* QUEIJOS AMARELOS:</o> Apenas para voce (colecao privada)\n\n"
+            tutorialText = tutorialText .. "<v>-> Pressione Q proximo a eles!</v>"
         else
-            tutorialText = tutorialText .. "<j>📦 SISTEMA DO POTE:</j> Se atingir 20 queijos, todos ganham bônus!\n"
-            tutorialText = tutorialText .. "<r>⚠️ DILEMA:</r> Cooperar ou ser individualista?\n\n"
-            tutorialText = tutorialText .. "<v>Estratégia é fundamental!</v>"
+            tutorialText = tutorialText .. "<j>* SISTEMA DO POTE:</j> Se atingir 20 queijos, todos ganham bonus!\n"
+            tutorialText = tutorialText .. "<r>! DILEMA:</r> Cooperar ou ser individualista?\n\n"
+            tutorialText = tutorialText .. "<v>-> Estrategia e fundamental!</v>"
         end
-        tutorialText = tutorialText .. "\n\n<font size='10'><r>Pressione ESC para fechar este tutorial</r></font>"
+        tutorialText = tutorialText .. "\n\n<font size='10'><r>+ Pressione ESC para fechar este tutorial +</r></font>"
         tutorialText = tutorialText .. "</font></p>"
         
         ui.addTextArea(999, tutorialText, nil, 100, 100, 600, 220, 0x1A1A1A, 0x7F7F7F, 0.9, true)
@@ -279,21 +279,22 @@ end
 
 -- 📋 Sistema de ajuda
 function showHelp(name)
-    local helpText = "<p align='center'><font size='12'><b>🧀 AJUDA - SHARE CHEESE</b></font>\n\n"
+    local helpText = "<p align='center'><font size='12'><b>[== AJUDA - SHARE CHEESE ==]</b></font>\n\n"
     helpText = helpText .. "<font size='10'>"
-    helpText = helpText .. "<j>🟢 QUEIJOS VERDES:</j> Vão para o pote comum (2 pontos)\n"
-    helpText = helpText .. "<o>🟡 QUEIJOS AMARELOS:</o> Ficam só para você (1 ponto)\n\n"
-    helpText = helpText .. "<b>🎯 OBJETIVO:</b> Maior pontuação individual\n"
-    helpText = helpText .. "<b>📦 POTE:</b> Se chegar a 20, todos ganham bônus!\n"
-    helpText = helpText .. "<b>⚡ ESTRATÉGIA:</b> Coletar um queijo remove o par oposto\n\n"
-    helpText = helpText .. "<b>🎮 CONTROLES:</b>\n"
-    helpText = helpText .. "• <v>Clique</v> nos queijos ou pressione <v>Q</v> próximo\n"
-    helpText = helpText .. "• <v>H</v> para mostrar esta ajuda\n"
-    helpText = helpText .. "• <v>ESC</v> para fechar tutorial/ajuda\n\n"
-    helpText = helpText .. "<v>Meta: " .. maxRounds .. " rodadas | Atual: " .. roundNumber .. "</v>"
+    helpText = helpText .. "<j>* QUEIJOS VERDES:</j> Vao para o pote comum (2 pontos)\n"
+    helpText = helpText .. "<o>* QUEIJOS AMARELOS:</o> Ficam so para voce (1 ponto)\n\n"
+    helpText = helpText .. "<b>* OBJETIVO:</b> Maior pontuacao individual\n"
+    helpText = helpText .. "<b>! POTE:</b> Se chegar a 20, todos ganham bonus!\n"
+    helpText = helpText .. "<b>+ ESTRATEGIA:</b> Coletar um queijo remove o par oposto\n\n"
+    helpText = helpText .. "<b>= CONTROLES:</b>\n"
+    helpText = helpText .. "• <v>Clique</v> nos queijos ou pressione <v>[Q]</v> proximo\n"
+    helpText = helpText .. "• <v>[H]</v> para mostrar esta ajuda\n"
+    helpText = helpText .. "• <v>[ESC]</v> para fechar tutorial/ajuda\n\n"
+    helpText = helpText .. "<v>-> Meta: " .. maxRounds .. " rodadas | Atual: " .. roundNumber .. " <-</v>\n"
+    helpText = helpText .. "<font size='8'><n>[========================]</n></font>"
     helpText = helpText .. "</font></p>"
     
-    ui.addTextArea(995, helpText, name, 100, 80, 600, 300, 0x1A1A1A, 0x7F7F7F, 0.9, true)
+    ui.addTextArea(995, helpText, name, 100, 80, 600, 320, 0x1A1A1A, 0x7F7F7F, 0.9, true)
     
     -- Ajuda será removida automaticamente após 15 segundos
 end
@@ -306,8 +307,8 @@ function applyEvent(name)
     if name == "Aurora" then
         scarcity = math.max(0.5, scarcity - 0.1)
     elseif name == "Seca" then
-        scarcity = scarcity + (0.2 * math.min(playerCount / 4, 1)) -- Ajusta baseado no número de jogadores
-    elseif name == "Fiscalização" then
+        scarcity = scarcity + (0.2 * math.min(playerCount / 4, 1))
+    elseif name == "Fiscalizacao" then
         for player in pairs(tfm.get.room.playerList) do
             bagPrivate[player] = math.floor(bagPrivate[player] * 0.5)
             logPlayerAction(player, "fiscalization_penalty", {lost = bagPrivate[player] * 0.5})
@@ -318,20 +319,17 @@ function applyEvent(name)
             pot = pot + leaked
             logPlayerAction(player, "private_leak", {leaked = leaked})
         end
-    elseif name == "Doação" then
-        local donation = 2 * math.max(1, playerCount / 2) -- Doação escala com jogadores
+    elseif name == "Doacao" then
+        local donation = 2 * math.max(1, playerCount / 2)
         for player in pairs(tfm.get.room.playerList) do
             pot = pot + donation
             logPlayerAction(player, "donation_received", {amount = donation})
         end
-    elseif name == "Queijofuracão" then
-        -- Evento especial: spawn de queijos extras
+    elseif name == "Queijofuracao" then
         spawnCheese()
     end
     
-    -- Ajusta meta do pote baseado no número de jogadores
     local potTarget = math.max(15, 20 + (playerCount - 4) * 2)
-    -- Meta do pote pode ser ajustada baseado no número de jogadores
 end
 
 -- 🧲 Sistema de coleta estratégica com remoção automática
@@ -486,17 +484,16 @@ function endGame()
     announceWinner(winner, maxScore, mostCooperative, mostIndividualistic)
 end
 
--- 🏆 Cerimônia de encerramento
+-- Cerimônia de encerramento
 function announceWinner(winner, score, cooperative, individualistic)
-    local finalText = "<p align='center'><font size='18'><b>🏆 FIM DE JOGO!</b></font>\n\n"
-    finalText = finalText .. "<font size='14'><b>🥇 VENCEDOR: <j>" .. winner .. "</j></b>\n"
-    finalText = finalText .. "<b>Pontuação: <j>" .. score .. "</j></b>\n\n"
+    local finalText = "<p align='center'><font size='18'><b>*** FIM DE JOGO! ***</b></font>\n\n"
+    finalText = finalText .. "<font size='14'><b>* VENCEDOR: <j>" .. winner .. "</j> *</b>\n"
+    finalText = finalText .. "<b>-> Pontuacao: <j>" .. score .. "</j> <-</b>\n\n"
     finalText = finalText .. "<font size='12'>"
-    finalText = finalText .. "<b>🤝 Mais Cooperativo:</b> <vp>" .. cooperative .. "</vp>\n"
-    finalText = finalText .. "<b>💰 Mais Individualista:</b> <o>" .. individualistic .. "</o>\n\n"
+    finalText = finalText .. "<b>* Mais Cooperativo:</b> <vp>" .. cooperative .. "</vp>\n"
+    finalText = finalText .. "<b>+ Mais Individualista:</b> <o>" .. individualistic .. "</o>\n\n"
     
-    -- Ranking final
-    finalText = finalText .. "<b>📊 RANKING FINAL:</b>\n"
+    finalText = finalText .. "<b>=== RANKING FINAL ===</b>\n"
     local sortedPlayers = {}
     for name in pairs(tfm.get.room.playerList) do
         table.insert(sortedPlayers, {name = name, score = playerScores[name] or 0})
@@ -507,30 +504,57 @@ function announceWinner(winner, score, cooperative, individualistic)
     for i, player in ipairs(sortedPlayers) do
         local pub = bagPublic[player.name] or 0
         local pri = bagPrivate[player.name] or 0
-        finalText = finalText .. string.format("%d. %s: %d pts (<vp>%d</vp>/<o>%d</o>)\n", 
-                                             i, player.name, player.score, pub, pri)
+        local medal = ""
+        if i == 1 then medal = "<j>* </j>"
+        elseif i == 2 then medal = "<vp>+ </vp>"
+        elseif i == 3 then medal = "<o>- </o>"
+        else medal = "<n>. </n>"
+        end
+        
+        finalText = finalText .. string.format("%s%d. %s: %d pts (<vp>%d</vp>/<o>%d</o>)\n", 
+                                             medal, i, player.name, player.score, pub, pri)
     end
     
-    finalText = finalText .. "\n<v>Cooperação da Sala: " .. string.format("%.1f", roomCooperation) .. "%</v>"
+    finalText = finalText .. "\n<v>= Cooperacao da Sala: " .. string.format("%.1f", roomCooperation) .. "% =</v>\n"
+    finalText = finalText .. "<font size='8'><n>===========================</n></font>"
     finalText = finalText .. "</font></p>"
     
-    ui.addTextArea(996, finalText, nil, 50, 50, 700, 350, 0x1A1A1A, 0x7F7F7F, 0.95, true)
+    ui.addTextArea(996, finalText, nil, 50, 50, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
     
-    -- Reinicia o jogo após 15 segundos
     tfm.exec.setGameTime(15)
 end
 
--- 🧾 Interface com ranking em tempo real
+-- Interface com ranking em tempo real
 function updateUI()
-    local text = "<p align='center'><font size='12'><b>Share Cheese</b>  "
-    -- Divide pote pelo número de jogadores
-    qntdIndividual = pot / math.max(1, #tfm.get.room.playerList)
-    text = text .. string.format("<v>%s</v>  <n>| Rodada: <j>%d/%d</j>  | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n", 
-                                eventName, roundNumber, maxRounds, pot, qntdIndividual)
-    text = text .. string.format("<n>Cooperação da Sala: <v>%.1f%%</v>\n", roomCooperation)
+    local text = "<p align='center'><font size='12'><b>*** Share Cheese ***</b>  "
+    local qntdIndividual = math.floor(pot / math.max(1, #tfm.get.room.playerList))
+    
+    -- Adiciona indicador visual do evento
+    local eventIcon = ""
+    if eventName == "Aurora" then eventIcon = "+"
+    elseif eventName == "Seca" then eventIcon = "-"
+    elseif eventName == "Fiscalizacao" then eventIcon = "!"
+    elseif eventName == "VazamentoPrivado" then eventIcon = "~"
+    elseif eventName == "Doacao" then eventIcon = "*"
+    elseif eventName == "Queijofuracao" then eventIcon = "#"
+    end
+    
+    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n", 
+                                eventIcon, eventName, roundNumber, maxRounds, pot, qntdIndividual)
+    
+    -- Barra visual de cooperação
+    local coopBars = math.floor(roomCooperation / 10)
+    local coopVisual = ""
+    for i = 1, 10 do
+        if i <= coopBars then
+            coopVisual = coopVisual .. "<vp>#</vp>"
+        else
+            coopVisual = coopVisual .. "<n>-</n>"
+        end
+    end
+    text = text .. string.format("<n>Cooperacao: %s <v>%.1f%%</v>\n", coopVisual, roomCooperation)
     text = text .. "<font size='11'>"
 
-    -- Calcula e ordena ranking em tempo real
     local players = {}
     for name in pairs(tfm.get.room.playerList) do
         local pub = bagPublic[name] or 0
@@ -548,14 +572,25 @@ function updateUI()
     
     for i, player in ipairs(players) do
         local medal = ""
-        if i == 1 then medal = "🥇 "
-        elseif i == 2 then medal = "🥈 "
-        elseif i == 3 then medal = "🥉 "
-        else medal = i .. ". "
+        if i == 1 then medal = "<j>* </j>"
+        elseif i == 2 then medal = "<vp>+ </vp>"
+        elseif i == 3 then medal = "<o>- </o>"
+        else medal = "<n>" .. i .. ". </n>"
         end
         
-        text = text .. string.format("<n>%s%s: <vp>%d Público</vp> | <o>%d Privado</o> | <j>%d pts</j>\n", 
-                                    medal, player.name, player.public, player.private, player.score)
+        -- Indicador de tendência comportamental
+        local tendency = ""
+        local total = player.public + player.private
+        if total > 0 then
+            local ratio = player.public / total
+            if ratio > 0.7 then tendency = "<vp>*</vp>"
+            elseif ratio < 0.3 then tendency = "<o>+</o>"
+            else tendency = "<j>-</j>"
+            end
+        end
+        
+        text = text .. string.format("%s%s %s: <vp>%d Pub</vp> | <o>%d Pri</o> | <j>%d pts</j>\n", 
+                                    medal, tendency, player.name, player.public, player.private, player.score)
     end
 
     ui.addTextArea(0, text, nil, 10, 28, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.8, true)
