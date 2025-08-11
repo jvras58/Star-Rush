@@ -354,12 +354,5 @@ O jogo coleta dados extensivos que podem ser utilizados para:
 
 **Divirta-se jogando Share Cheese e contribuindo para a pesquisa em jogos cooperativos! 🧀✨**
 
-### 🎮 Estatísticas do Projeto
-- **Linhas de código**: ~800+ linhas Lua
-- **Sistemas implementados**: 8 sistemas principais
-- **Eventos únicos**: 6 tipos diferentes
-- **Métricas coletadas**: 15+ tipos de dados
-- **Interface elements**: 10+ componentes UI
-- **Mapas suportados**: 5 ambientes diferentes
 
 *"Um jogo é um sistema no qual os jogadores se envolvem em um conflito artificial, definido por regras, que resulta em um resultado quantificável."* - Katie Salen & Eric Zimmerman

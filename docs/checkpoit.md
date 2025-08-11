@@ -2,37 +2,40 @@
 
 ## 🧀 Sistema de Queijos
 
-### [] Geração Estratégica de Queijos
+### [x] Geração Estratégica de Queijos
 - **Objetivo**: Implementar geração de pares de queijos (público + privado) próximos
 - **Implementação**: 
-  - Modificar função `spawnCheese()` para gerar sempre duplas
-  - Definir distância máxima entre queijos do mesmo par (50-80 pixels)
-  - Manter proporção atual (60% público / 40% privado)
+  - [x] Modificar função `spawnCheese()` para gerar sempre duplas
+  - [x] Definir distância máxima entre queijos do mesmo par (50-80 pixels)
+  - [x] Manter proporção atual (60% público / 40% privado)
 - **Prioridade**: Alta
+- **EllianRodrigues**
 
 ### [] Sistema de Coleta Estratégica
 - **Objetivo**: Ao coletar um queijo público, remover automaticamente o queijo privado mais próximo (e vice-versa)
 - **Implementação**:
-  - Modificar função `collectCheese()` para detectar queijo par mais próximo
-  - Adicionar função `findNearestOppositeType()` 
-  - Implementar remoção automática do queijo par
+  -[x] Modificar função `collectCheese()` para detectar queijo par mais próximo
+  -[x] Adicionar função `findNearestOppositeType()` 
+  -[x] Implementar remoção automática do queijo par
 - **Prioridade**: Alta
 - **Benefício**: Aumenta tensão estratégica e dilema cooperativo
+- **EllianRodrigues**
 
 ## 📊 Sistema de Pontuação e Ranking
 
-### [] Implementar Ranking em Tempo Real
+### [x] Implementar Ranking em Tempo Real
 - **Objetivo**: Mostrar classificação dos jogadores durante o jogo
 - **Implementação**:
-  - Criar função `calculatePlayerScore()` baseada em:
-    - Queijos públicos coletados
-    - Queijos privados em posse
-    - Contribuição para o pote
-  - Adicionar painel de ranking na interface
-  - Atualizar ranking a cada coleta
+  - [x]Criar função `calculatePlayerScore()` baseada em:
+    - [x]Queijos públicos coletados
+    - [x]Queijos privados em posse
+    - [x] Contribuição para o pote
+  - [x] Adicionar painel de ranking na interface
+  - [x] Atualizar ranking a cada coleta
 - **Prioridade**: Média
+- **EllianRodrigues**
 
-### [] Sistema de Pontuação Final
+### [x] Sistema de Pontuação Final
 - **Objetivo**: Calcular pontuação final considerando todos os fatores
 - **Fórmula Proposta**: 
   ```
@@ -66,12 +69,13 @@
 ### [] Tutorial Interativo
 - **Objetivo**: Explicar mecânicas para novos jogadores
 - **Implementação**:
-  - Função `showTutorial()` no início do jogo
+  - [x] Função `showTutorial()` no início do jogo
   - Mensagens explicativas por rodada:
     - Rodada 1-2: Explicar tipos de queijo
     - Rodada 3-4: Explicar sistema de pote
     - Rodada 5+: Explicar eventos
 - **Prioridade**: Média
+- **EllianRodrigues**
 
 ### [] Sistema de Dicas Contextuais
 - **Objetivo**: Mostrar dicas baseadas no estado atual do jogo
@@ -161,9 +165,9 @@
   }
   ```
 
-### [] Sistema de Análise em Tempo Real
+### [x] Sistema de Análise em Tempo Real
 - **Indicadores durante o jogo**:
-  - **Índice de cooperação da sala**: % de queijos públicos coletados
+  - **[x] Índice de cooperação da sala**: % de queijos públicos coletados
   - **Jogador mais cooperativo/individualista** da rodada
   - **Tendência do grupo**: Se cooperação aumenta ou diminui
   - **Efetividade dos eventos**: Como cada evento influencia comportamento
