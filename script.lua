@@ -11,7 +11,7 @@ tfm.exec.disableAfkDeath(true)
 local mapas = {"@5451839", "@5445849", "@6599901", "@6682692", "@6399897"}
 local cheeseList = {} -- {id, x, y, public}
 local cheeseID = 0
-local radius = 30^2
+local radius = 35^2 -- tamanho dos objetos físicos (estrelinhas e cifrões)
 local bagPublic = {}
 local bagPrivate = {}
 local pot = 0
@@ -27,66 +27,137 @@ local gameData = {}
 local playerStats = {}
 local roomCooperation = 0
 
--- 🏆 Sistema de ranking
-local playerScores = {}
+-- 🗺️ Sistema de análise de mapa
+local mapGrounds = {}
+local mapDecorations = {}
+local validSpawnAreas = {}
 
--- 📊 Sistema de logging comportamental
-function logPlayerAction(player, action, data)
-    if not gameData[player] then gameData[player] = {} end
-    local logEntry = {
-        player = player,
-        round = roundNumber,
-        action = action,
-        cheese_type = data.cheese_type or nil,
-        position = data.position or nil,
-        pot_state = pot,
-        event = eventName,
-        timestamp = os.time()
-    }
-    table.insert(gameData[player], logEntry)
-end
+-- 🔍 Função para extrair e analisar XML do mapa
+function analyzeMapXML()
+    mapGrounds = {}
+    mapDecorations = {}
+    validSpawnAreas = {}
 
--- 🏆 Calcula pontuação do jogador
-function calculatePlayerScore(name)
-    local publicCheeses = bagPublic[name] or 0
-    local privateCheeses = bagPrivate[name] or 0
-    local potBonus = (pot >= 20) and (#tfm.get.room.playerList * 2) or 0
-    return (publicCheeses * 2) + (privateCheeses * 1) + potBonus
-end
-
--- 📈 Calcula cooperação da sala
-function calculateRoomCooperation()
-    local totalPublic = 0
-    local totalPrivate = 0
-    for name in pairs(tfm.get.room.playerList) do
-        totalPublic = totalPublic + (bagPublic[name] or 0)
-        totalPrivate = totalPrivate + (bagPrivate[name] or 0)
+    if not tfm.get.room.xmlMapInfo or not tfm.get.room.xmlMapInfo.xml then
+        return false
     end
-    local total = totalPublic + totalPrivate
-    roomCooperation = total > 0 and (totalPublic / total * 100) or 0
-    return roomCooperation
-end
 
--- 🔍 Verifica se posição é válida para spawn
-function isValidSpawnLocation(x, y)
-    -- Verificar distância mínima das bordas
-    if x < 50 or y < 50 then return false end
-    if not tfm.get.room.xmlMapInfo then return true end
-    
+    local xml = tfm.get.room.xmlMapInfo.xml
     local mapWidth = tfm.get.room.xmlMapInfo.width or 800
     local mapHeight = tfm.get.room.xmlMapInfo.height or 400
-    
-    if x > mapWidth - 50 or y > mapHeight - 50 then return false end
-    
-    -- Verificar proximidade com outros queijos
-    for _, cheese in pairs(cheeseList) do
-        local dx = x - cheese.x
-        local dy = y - cheese.y
-        if dx * dx + dy * dy < 40^2 then -- Distância mínima entre queijos
+
+    -- Extrai grounds (pisos) do XML
+    xml:gsub('<S(.-)/>', function(attributes)
+        local ground = {}
+        ground.x = tonumber(attributes:match('X="([^"]*)"')) or 0
+        ground.y = tonumber(attributes:match('Y="([^"]*)"')) or 0
+        ground.width  = tonumber(attributes:match('L="([^"]*)"')) or 10
+        ground.height = tonumber(attributes:match('H="([^"]*)"')) or 10
+        ground.type   = tonumber(attributes:match('T="([^"]*)"')) or 0
+        -- Considera somente alguns tipos como sólidos (ignora água/ácido, etc.)
+        if ground.type ~= 1 and ground.type ~= 2 then
+            table.insert(mapGrounds, ground)
+        end
+    end)
+
+    -- Extrai decorações
+    xml:gsub('<D(.-)/>', function(attributes)
+        local decoration = {}
+        decoration.x = tonumber(attributes:match('X="([^"]*)"')) or 0
+        decoration.y = tonumber(attributes:match('Y="([^"]*)"')) or 0
+        table.insert(mapDecorations, decoration)
+    end)
+
+    -- Gera áreas válidas para spawn
+    generateValidSpawnAreas(mapWidth, mapHeight)
+    return true
+end
+
+-- 🎯 Gera áreas válidas para spawn de queijos
+function generateValidSpawnAreas(mapWidth, mapHeight)
+    local gridSize = 40 -- tamanho da malha de amostragem
+    for x = 50, mapWidth - 50, gridSize do
+        for y = 50, mapHeight - 50, gridSize do
+            if isValidSpawnPosition(x, y) then
+                table.insert(validSpawnAreas, { x = x, y = y })
+            end
+        end
+    end
+
+    -- fallback de segurança
+    if #validSpawnAreas == 0 then
+        for i = 1, 8 do
+            table.insert(validSpawnAreas, {
+                x = math.random(80, mapWidth - 80),
+                y = math.random(80, mapHeight - 80)
+            })
+        end
+    end
+end
+
+-- 🔍 Verifica se uma posição é válida (topo de plataforma / livre)
+function isValidSpawnPosition(x, y)
+    -- Testa relação com grounds
+    for _, ground in pairs(mapGrounds) do
+        local dx = math.abs(x - ground.x)
+        local dy = math.abs(y - ground.y)
+
+        -- Perto ou dentro do retângulo do ground (com margem)
+        if dx < (ground.width / 2 + 30) and dy < (ground.height / 2 + 30) then
+            -- Topo do ground (plataforma)
+            local topY = ground.y - ground.height / 2
+            if y <= topY + 40 and y >= topY - 10 then
+                return true
+            else
+                return false
+            end
+        end
+    end
+
+    -- Evita colisão visual com decorações
+    for _, decoration in pairs(mapDecorations) do
+        local dx = math.abs(x - decoration.x)
+        local dy = math.abs(y - decoration.y)
+        if dx < 25 and dy < 25 then
             return false
         end
     end
-    
+
+    -- Livre de obstáculos → permitido
+    return true
+end
+
+-- 🔍 Verifica se posição é válida para spawn (versão melhorada)
+function isValidSpawnLocation(x, y)
+    -- bordas
+    if x < 50 or y < 50 then return false end
+    if not tfm.get.room.xmlMapInfo then return true end
+
+    local mapWidth = tfm.get.room.xmlMapInfo.width or 800
+    local mapHeight = tfm.get.room.xmlMapInfo.height or 400
+    if x > mapWidth - 50 or y > mapHeight - 50 then return false end
+
+    -- distância mínima de outros queijos
+    for _, cheese in pairs(cheeseList) do
+        local dx = x - cheese.x
+        local dy = y - cheese.y
+        if dx * dx + dy * dy < 40^2 then
+            return false
+        end
+    end
+
+    -- Prioriza áreas válidas do XML
+    if #validSpawnAreas > 0 then
+        for _, area in pairs(validSpawnAreas) do
+            local dx = math.abs(x - area.x)
+            local dy = math.abs(y - area.y)
+            if dx < 60 and dy < 60 then
+                return true
+            end
+        end
+        return false
+    end
+
     return true
 end
 
@@ -94,20 +165,20 @@ end
 function findNearestOppositeType(targetX, targetY, targetType)
     local nearestCheese = nil
     local minDistance = math.huge
-    
+
     for i, cheese in pairs(cheeseList) do
         if cheese.public ~= targetType then
             local dx = targetX - cheese.x
             local dy = targetY - cheese.y
             local distance = dx * dx + dy * dy
-            
+
             if distance < minDistance and distance <= (80^2) then -- Máximo 80 pixels
                 minDistance = distance
                 nearestCheese = i
             end
         end
     end
-    
+
     return nearestCheese
 end
 
@@ -131,7 +202,7 @@ function init()
             spatialPreferences = {}
         }
     end
-    
+
     showTutorial()
     newRound()
 end
@@ -142,33 +213,36 @@ function showTutorial()
         local tutorialText = "<p align='center'><font size='14'><b>=== TUTORIAL - SHARE CHEESE ===</b></font>\n\n"
         tutorialText = tutorialText .. "<font size='12'>"
         if roundNumber == 1 then
-            tutorialText = tutorialText .. "<j>* QUEIJOS VERDES:</j> Beneficiam todos os jogadores (vao para o pote)\n"
-            tutorialText = tutorialText .. "<o>* QUEIJOS AMARELOS:</o> Apenas para voce (colecao privada)\n\n"
+            tutorialText = tutorialText .. "<j>★ ESTRELAS VERDES:</j> Beneficiam todos os jogadores (vao para o pote)\n"
+            tutorialText = tutorialText .. "<o>$ CIFRÕES AMARELOS:</o> Apenas para voce (colecao privada)\n\n"
             tutorialText = tutorialText .. "<v>-> Pressione Q proximo a eles!</v>"
         else
-            tutorialText = tutorialText .. "<j>* SISTEMA DO POTE:</j> Se atingir 20 queijos, todos ganham bonus!\n"
+            tutorialText = tutorialText .. "<j>★ SISTEMA DO POTE:</j> Se atingir 20 estrelas, todos ganham bonus!\n"
             tutorialText = tutorialText .. "<r>! DILEMA:</r> Cooperar ou ser individualista?\n\n"
             tutorialText = tutorialText .. "<v>-> Estrategia e fundamental!</v>"
         end
         tutorialText = tutorialText .. "\n\n<font size='10'><r>+ Pressione ESC para fechar este tutorial +</r></font>"
         tutorialText = tutorialText .. "</font></p>"
-        
+
         ui.addTextArea(999, tutorialText, nil, 100, 100, 600, 220, 0x1A1A1A, 0x7F7F7F, 0.9, true)
-        
-        -- Remove tutorial após 10 segundos automaticamente (sem alterar tempo do jogo)
     end
 end
 
--- 🔁 Nova rodada
+-- 🔁 Nova rodada (usa análise de XML do mapa)
 function newRound()
+    -- Remove todos os símbolos ASCII da rodada anterior
+    for i = 1, cheeseID do
+        ui.removeTextArea(20000 + i, nil)
+    end
+    
     cheeseList = {}
     cheeseID = 0
     pot = 0
     roundNumber = roundNumber + 1
-    
+
     -- Remove tutorial se existir
     ui.removeTextArea(999, nil)
-    
+
     -- Verifica limite de rodadas
     if roundNumber > maxRounds then
         endGame()
@@ -176,82 +250,104 @@ function newRound()
     end
 
     tfm.exec.newGame(mapas[math.random(#mapas)])
+
     nextSpawn = 0
     eventName = events[math.random(#events)]
     applyEvent(eventName)
-    showTutorial() -- Mostra tutorial se necessário
+    showTutorial()
     tfm.exec.setGameTime(30)
     updateUI()
 end
 
--- 🧀 Spawna queijos estratégicos em pares próximos
+-- Spawn estratégicos usando análise do mapa
 function spawnCheese()
     if not tfm.get.room.xmlMapInfo then return end
-    local mapWidth = tfm.get.room.xmlMapInfo.width or 800
-    local mapHeight = tfm.get.room.xmlMapInfo.height or 400
 
+    local mapWidth  = tfm.get.room.xmlMapInfo.width  or 800
+    local mapHeight = tfm.get.room.xmlMapInfo.height or 400
     local targetCheeses = getMaxCheesePerRound()
     local attempts = 0
-    
-    while #cheeseList < targetCheeses and attempts < 100 do
-        attempts = attempts + 1
-        local x = math.random(80, mapWidth - 80)
-        local y = math.random(80, mapHeight - 80)
-        
-        if isValidSpawnLocation(x, y) then
-            -- Spawna par de queijos próximos
-            local isPublic = math.random() < 0.6
-            local color = isPublic and 0x55FF55 or 0xFFFF55
-            local particle = isPublic and 3 or 13
 
-            cheeseID = cheeseID + 1
+    if #validSpawnAreas > 0 then
+        -- Embaralha áreas
+        local shuffled = {}
+        for _, area in ipairs(validSpawnAreas) do
+            table.insert(shuffled, area)
+        end
+        for i = #shuffled, 2, -1 do
+            local j = math.random(i)
+            shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+        end
 
-            tfm.exec.addPhysicObject(10000 + cheeseID, x, y, {
-                type = 12, width = 20, height = 20,
-                foreground = true, friction = 0.3, restitution = 0.2,
-                angle = 0, color = color
-            })
+        local idx = 1
+        while #cheeseList < targetCheeses and idx <= #shuffled do
+            local area = shuffled[idx]
+            local x = math.max(80, math.min(mapWidth - 80, area.x + math.random(-20, 20)))
+            local y = math.max(80, math.min(mapHeight - 80, area.y + math.random(-20, 20)))
 
-            tfm.exec.displayParticle(particle, x, y, 0, 0, 0, 0.01)
+            if isValidSpawnLocation(x, y) then
+                local isPublic = math.random() < 0.6
+                local symbol = isPublic and "★" or "$"
+                local color = isPublic and 0x55FF55 or 0xFFDD00
 
-            table.insert(cheeseList, {
-                id = cheeseID,
-                x = x,
-                y = y,
-                public = isPublic
-            })
-            
-            -- Tenta spawnar queijo do tipo oposto próximo
-            if #cheeseList < targetCheeses then
-                local pairX = x + math.random(-60, 60)
-                local pairY = y + math.random(-60, 60)
-                
-                -- Garante que o par esteja dentro dos limites
-                pairX = math.max(80, math.min(mapWidth - 80, pairX))
-                pairY = math.max(80, math.min(mapHeight - 80, pairY))
-                
-                if isValidSpawnLocation(pairX, pairY) then
-                    local pairIsPublic = not isPublic
-                    local pairColor = pairIsPublic and 0x55FF55 or 0xFFFF55
-                    local pairParticle = pairIsPublic and 3 or 13
+                cheeseID = cheeseID + 1
+                -- Cria objeto invisível para colisão
+                tfm.exec.addPhysicObject(10000 + cheeseID, x, y, {
+                    type = 12, width = 35, height = 35,
+                    foreground = true, friction = 0.3, restitution = 0.2,
+                    angle = 0, color = 0x000000, alpha = 0.01
+                })
+                -- Adiciona o símbolo ASCII como texto
+                ui.addTextArea(20000 + cheeseID, "<p align='center'><font size='20' color='#" .. string.format("%06X", color) .. "'><b>" .. symbol .. "</b></font></p>", nil, x-17, y-17, 35, 35, 0, 0, 0, false)
+                table.insert(cheeseList, { id = cheeseID, x = x, y = y, public = isPublic })
 
-                    cheeseID = cheeseID + 1
+                -- tenta spawnar o par do tipo oposto próximo (em outra área válida)
+                if #cheeseList < targetCheeses and idx < #shuffled then
+                    idx = idx + 1
+                    local pairArea = shuffled[idx]
+                    local px = math.max(80, math.min(mapWidth - 80, pairArea.x + math.random(-20, 20)))
+                    local py = math.max(80, math.min(mapHeight - 80, pairArea.y + math.random(-20, 20)))
+                    if isValidSpawnLocation(px, py) then
+                        local pairIsPublic = not isPublic
+                        local pairSymbol = pairIsPublic and "★" or "$"
+                        local pairColor = pairIsPublic and 0x55FF55 or 0xFFDD00
 
-                    tfm.exec.addPhysicObject(10000 + cheeseID, pairX, pairY, {
-                        type = 12, width = 20, height = 20,
-                        foreground = true, friction = 0.3, restitution = 0.2,
-                        angle = 0, color = pairColor
-                    })
-
-                    tfm.exec.displayParticle(pairParticle, pairX, pairY, 0, 0, 0, 0.01)
-
-                    table.insert(cheeseList, {
-                        id = cheeseID,
-                        x = pairX,
-                        y = pairY,
-                        public = pairIsPublic
-                    })
+                        cheeseID = cheeseID + 1
+                        -- Cria objeto invisível para colisão
+                        tfm.exec.addPhysicObject(10000 + cheeseID, px, py, {
+                            type = 12, width = 35, height = 35,
+                            foreground = true, friction = 0.3, restitution = 0.2,
+                            angle = 0, color = 0x000000, alpha = 0.01
+                        })
+                        -- Adiciona o símbolo ASCII como texto
+                        ui.addTextArea(20000 + cheeseID, "<p align='center'><font size='20' color='#" .. string.format("%06X", pairColor) .. "'><b>" .. pairSymbol .. "</b></font></p>", nil, px-17, py-17, 35, 35, 0, 0, 0, false)
+                        table.insert(cheeseList, { id = cheeseID, x = px, y = py, public = pairIsPublic })
+                    end
                 end
+            end
+            idx = idx + 1
+        end
+    else
+        -- Fallback (mapa sem XML analisável)
+        while #cheeseList < targetCheeses and attempts < 100 do
+            attempts = attempts + 1
+            local x = math.random(80, mapWidth - 80)
+            local y = math.random(80, mapHeight - 80)
+            if isValidSpawnLocation(x, y) then
+                local isPublic = math.random() < 0.6
+                local symbol = isPublic and "★" or "$"
+                local color = isPublic and 0x55FF55 or 0xFFDD00
+
+                cheeseID = cheeseID + 1
+                -- Cria objeto invisível para colisão
+                tfm.exec.addPhysicObject(10000 + cheeseID, x, y, {
+                    type = 12, width = 35, height = 35,
+                    foreground = true, friction = 0.3, restitution = 0.2,
+                    angle = 0, color = 0x000000, alpha = 0.01
+                })
+                -- Adiciona o símbolo ASCII como texto
+                ui.addTextArea(20000 + cheeseID, "<p align='center'><font size='20' color='#" .. string.format("%06X", color) .. "'><b>" .. symbol .. "</b></font></p>", nil, x-17, y-17, 35, 35, 0, 0, 0, false)
+                table.insert(cheeseList, { id = cheeseID, x = x, y = y, public = isPublic })
             end
         end
     end
@@ -273,7 +369,6 @@ function eventKeyboard(name, key, down)
     elseif key == 27 and down then -- ESC key para fechar tutorial/ajuda
         ui.removeTextArea(999, name) -- Remove tutorial
         ui.removeTextArea(995, name) -- Remove ajuda
-        -- Tutorial/Ajuda fechados
     end
 end
 
@@ -281,29 +376,27 @@ end
 function showHelp(name)
     local helpText = "<p align='center'><font size='12'><b>[== AJUDA - SHARE CHEESE ==]</b></font>\n\n"
     helpText = helpText .. "<font size='10'>"
-    helpText = helpText .. "<j>* QUEIJOS VERDES:</j> Vao para o pote comum (2 pontos)\n"
-    helpText = helpText .. "<o>* QUEIJOS AMARELOS:</o> Ficam so para voce (1 ponto)\n\n"
+    helpText = helpText .. "<j>★ ESTRELAS VERDES:</j> Vao para o pote comum (2 pontos)\n"
+    helpText = helpText .. "<o>$ CIFRÕES AMARELOS:</o> Ficam so para voce (1 ponto)\n\n"
     helpText = helpText .. "<b>* OBJETIVO:</b> Maior pontuacao individual\n"
     helpText = helpText .. "<b>! POTE:</b> Se chegar a 20, todos ganham bonus!\n"
-    helpText = helpText .. "<b>+ ESTRATEGIA:</b> Coletar um queijo remove o par oposto\n\n"
+    helpText = helpText .. "<b>+ ESTRATEGIA:</b> Coletar um item remove o par oposto\n\n"
     helpText = helpText .. "<b>= CONTROLES:</b>\n"
-    helpText = helpText .. "• <v>Clique</v> nos queijos ou pressione <v>[Q]</v> proximo\n"
+    helpText = helpText .. "• <v>Pressione <v>[Q]</v> proximo\n"
     helpText = helpText .. "• <v>[H]</v> para mostrar esta ajuda\n"
     helpText = helpText .. "• <v>[ESC]</v> para fechar tutorial/ajuda\n\n"
     helpText = helpText .. "<v>-> Meta: " .. maxRounds .. " rodadas | Atual: " .. roundNumber .. " <-</v>\n"
     helpText = helpText .. "<font size='8'><n>[========================]</n></font>"
     helpText = helpText .. "</font></p>"
-    
+
     ui.addTextArea(995, helpText, name, 100, 80, 600, 320, 0x1A1A1A, 0x7F7F7F, 0.9, true)
-    
-    -- Ajuda será removida automaticamente após 15 segundos
 end
 
 -- 🎲 Evento aleatório com balanceamento dinâmico
 function applyEvent(name)
     local playerCount = 0
     for _ in pairs(tfm.get.room.playerList) do playerCount = playerCount + 1 end
-    
+
     if name == "Aurora" then
         scarcity = math.max(0.5, scarcity - 0.1)
     elseif name == "Seca" then
@@ -328,7 +421,7 @@ function applyEvent(name)
     elseif name == "Queijofuracao" then
         spawnCheese()
     end
-    
+
     local potTarget = math.max(15, 20 + (playerCount - 4) * 2)
 end
 
@@ -345,32 +438,34 @@ function tryPickCheese(name, x, y)
                 cheese_type = c.public and "public" or "private",
                 position = {x = c.x, y = c.y}
             })
-            
+
             -- Atualiza estatísticas do jogador
             if playerStats[name] then
                 playerStats[name].totalActions = playerStats[name].totalActions + 1
                 table.insert(playerStats[name].spatialPreferences, {x = c.x, y = c.y})
             end
-            
+
             if c.public then
                 bagPublic[name] = bagPublic[name] + 1
                 pot = pot + 1 * scarcity
             else
                 bagPrivate[name] = bagPrivate[name] + 1
             end
-            
+
             -- Remove o queijo coletado
             tfm.exec.removePhysicObject(10000 + c.id)
+            ui.removeTextArea(20000 + c.id, nil) -- Remove símbolo ASCII
             table.remove(cheeseList, i)
-            
+
             -- Busca e remove queijo do tipo oposto mais próximo
             local oppositeIndex = findNearestOppositeType(c.x, c.y, c.public)
             if oppositeIndex then
                 local oppositeCheese = cheeseList[oppositeIndex]
                 tfm.exec.removePhysicObject(10000 + oppositeCheese.id)
+                ui.removeTextArea(20000 + oppositeCheese.id, nil) -- Remove símbolo ASCII do par
                 table.remove(cheeseList, oppositeIndex)
             end
-            
+
             calculateRoomCooperation()
             updateUI()
             break
@@ -393,15 +488,13 @@ function endRound()
         scarcity = math.max(0.5, scarcity - 0.1)
         pot = 0
     end
-    
+
     -- Atualiza rankings
     updatePlayerRankings()
-    
+
     -- Inicia nova rodada diretamente
     newRound()
 end
-
-
 
 -- ⏱️ Loop principal do jogo
 function eventLoop(current, remaining)
@@ -409,17 +502,17 @@ function eventLoop(current, remaining)
         spawnCheese()
         nextSpawn = current + 500
     end
-    
+
     -- Remove tutorial automaticamente após 10 segundos
     if current % 10000 == 0 then
         ui.removeTextArea(999, nil) -- Remove tutorial
     end
-    
+
     -- Remove ajuda após 15 segundos
     if current % 15000 == 0 then
         ui.removeTextArea(995, nil)
     end
-    
+
     if remaining <= 0 then
         if roundNumber >= maxRounds then
             endGame()
@@ -427,7 +520,7 @@ function eventLoop(current, remaining)
             endRound()
         end
     end
-    
+
     -- Reinicia jogo automaticamente após fim
     if remaining <= -15 and roundNumber >= maxRounds then
         roundNumber = 0 -- Reset para reiniciar
@@ -436,7 +529,10 @@ function eventLoop(current, remaining)
     end
 end
 
-
+-- Disparado quando um novo mapa é carregado (XML disponível)
+function eventNewGame()
+    analyzeMapXML()
+end
 
 -- 🏆 Atualiza rankings dos jogadores
 function updatePlayerRankings()
@@ -446,10 +542,47 @@ function updatePlayerRankings()
     end
 end
 
+-- 🏆 Calcula pontuação do jogador
+function calculatePlayerScore(name)
+    local publicCheeses = bagPublic[name] or 0
+    local privateCheeses = bagPrivate[name] or 0
+    local potBonus = (pot >= 20) and (#tfm.get.room.playerList * 2) or 0
+    return (publicCheeses * 2) + (privateCheeses * 1) + potBonus
+end
+
+-- 📈 Calcula cooperação da sala
+function calculateRoomCooperation()
+    local totalPublic = 0
+    local totalPrivate = 0
+    for name in pairs(tfm.get.room.playerList) do
+        totalPublic = totalPublic + (bagPublic[name] or 0)
+        totalPrivate = totalPrivate + (bagPrivate[name] or 0)
+    end
+    local total = totalPublic + totalPrivate
+    roomCooperation = total > 0 and (totalPublic / total * 100) or 0
+    return roomCooperation
+end
+
+-- 📊 Sistema de logging comportamental
+function logPlayerAction(player, action, data)
+    if not gameData[player] then gameData[player] = {} end
+    local logEntry = {
+        player = player,
+        round = roundNumber,
+        action = action,
+        cheese_type = data.cheese_type or nil,
+        position = data.position or nil,
+        pot_state = pot,
+        event = eventName,
+        timestamp = os.time()
+    }
+    table.insert(gameData[player], logEntry)
+end
+
 -- 🎯 Fim do jogo
 function endGame()
     updatePlayerRankings()
-    
+
     -- Encontra vencedor
     local winner = ""
     local maxScore = -1
@@ -457,14 +590,14 @@ function endGame()
     local maxCoopRatio = -1
     local mostIndividualistic = ""
     local minCoopRatio = 2
-    
+
     for name in pairs(tfm.get.room.playerList) do
         local score = playerScores[name] or 0
         if score > maxScore then
             maxScore = score
             winner = name
         end
-        
+
         local pub = bagPublic[name] or 0
         local pri = bagPrivate[name] or 0
         local total = pub + pri
@@ -480,7 +613,7 @@ function endGame()
             end
         end
     end
-    
+
     announceWinner(winner, maxScore, mostCooperative, mostIndividualistic)
 end
 
@@ -492,15 +625,15 @@ function announceWinner(winner, score, cooperative, individualistic)
     finalText = finalText .. "<font size='12'>"
     finalText = finalText .. "<b>* Mais Cooperativo:</b> <vp>" .. cooperative .. "</vp>\n"
     finalText = finalText .. "<b>+ Mais Individualista:</b> <o>" .. individualistic .. "</o>\n\n"
-    
+
     finalText = finalText .. "<b>=== RANKING FINAL ===</b>\n"
     local sortedPlayers = {}
     for name in pairs(tfm.get.room.playerList) do
         table.insert(sortedPlayers, {name = name, score = playerScores[name] or 0})
     end
-    
+
     table.sort(sortedPlayers, function(a, b) return a.score > b.score end)
-    
+
     for i, player in ipairs(sortedPlayers) do
         local pub = bagPublic[player.name] or 0
         local pri = bagPrivate[player.name] or 0
@@ -510,17 +643,17 @@ function announceWinner(winner, score, cooperative, individualistic)
         elseif i == 3 then medal = "<o>- </o>"
         else medal = "<n>. </n>"
         end
-        
-        finalText = finalText .. string.format("%s%d. %s: %d pts (<vp>%d</vp>/<o>%d</o>)\n", 
+
+        finalText = finalText .. string.format("%s%d. %s: %d pts (<vp>%d</vp>/<o>%d</o>)\n",
                                              medal, i, player.name, player.score, pub, pri)
     end
-    
+
     finalText = finalText .. "\n<v>= Cooperacao da Sala: " .. string.format("%.1f", roomCooperation) .. "% =</v>\n"
     finalText = finalText .. "<font size='8'><n>===========================</n></font>"
     finalText = finalText .. "</font></p>"
-    
+
     ui.addTextArea(996, finalText, nil, 50, 50, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
-    
+
     tfm.exec.setGameTime(15)
 end
 
@@ -528,7 +661,7 @@ end
 function updateUI()
     local text = "<p align='center'><font size='12'><b>*** Share Cheese ***</b>  "
     local qntdIndividual = math.floor(pot / math.max(1, #tfm.get.room.playerList))
-    
+
     -- Adiciona indicador visual do evento
     local eventIcon = ""
     if eventName == "Aurora" then eventIcon = "+"
@@ -538,10 +671,10 @@ function updateUI()
     elseif eventName == "Doacao" then eventIcon = "*"
     elseif eventName == "Queijofuracao" then eventIcon = "#"
     end
-    
-    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n", 
+
+    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
                                 eventIcon, eventName, roundNumber, maxRounds, pot, qntdIndividual)
-    
+
     -- Barra visual de cooperação
     local coopBars = math.floor(roomCooperation / 10)
     local coopVisual = ""
@@ -567,9 +700,9 @@ function updateUI()
             score = score
         })
     end
-    
+
     table.sort(players, function(a, b) return a.score > b.score end)
-    
+
     for i, player in ipairs(players) do
         local medal = ""
         if i == 1 then medal = "<j>* </j>"
@@ -577,7 +710,7 @@ function updateUI()
         elseif i == 3 then medal = "<o>- </o>"
         else medal = "<n>" .. i .. ". </n>"
         end
-        
+
         -- Indicador de tendência comportamental
         local tendency = ""
         local total = player.public + player.private
@@ -588,8 +721,8 @@ function updateUI()
             else tendency = "<j>-</j>"
             end
         end
-        
-        text = text .. string.format("%s%s %s: <vp>%d Pub</vp> | <o>%d Pri</o> | <j>%d pts</j>\n", 
+
+        text = text .. string.format("%s%s %s: <vp>%d Pub</vp> | <o>%d Pri</o> | <j>%d pts</j>\n",
                                     medal, tendency, player.name, player.public, player.private, player.score)
     end
 
@@ -607,12 +740,15 @@ function eventNewPlayer(name)
         spatialPreferences = {}
     }
     system.bindKeyboard(name, 81, true, true) -- Q para coletar
-    system.bindKeyboard(name, 72, true, true) -- H para ajuda  
+    system.bindKeyboard(name, 72, true, true) -- H para ajuda
     system.bindKeyboard(name, 27, true, true) -- ESC para fechar
     updateUI()
-    
-    -- Novo jogador adicionado com sucesso
 end
 
--- ▶️ Início
+-- ▶️ Início do mapa (garante XML disponível)
+function eventNewGame()
+    analyzeMapXML()
+end
+
+-- ▶️ Start
 init()
