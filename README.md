@@ -1,50 +1,50 @@
-# 🧀 Share Cheese
+# ★ STAR - RACE
 
-Um jogo cooperativo multiplayer avançado desenvolvido para Transformice onde os jogadores coletam queijos públicos e privados, gerenciam recursos compartilhados, enfrentam eventos aleatórios e competem em um sistema de ranking baseado em cooperação e performance individual.
+Um jogo cooperativo multiplayer avançado desenvolvido para Transformice onde os jogadores coletam Estrelas públicos e/ou privados, gerenciam recursos compartilhados, enfrentam eventos aleatórios e competem em um sistema de ranking baseado em cooperação e performance individual.
 
 ## 📖 Como Jogar
 
 ### 🎯 Objetivo
-O objetivo principal é coletar queijos e maximizar os ganhos coletivos através da cooperação estratégica. O jogo funciona com um sistema de **pote compartilhado** que beneficia todos os jogadores quando atingem metas específicas, combinado com um **sistema de ranking** que recompensa tanto performance individual quanto cooperação.
+O objetivo principal é coletar estrelas e maximizar os ganhos coletivos através da cooperação estratégica. O jogo funciona com um sistema de **pote compartilhado** que beneficia todos os jogadores quando atingem metas específicas, combinado com um **sistema de ranking** que recompensa tanto performance individual quanto cooperação.
 
 ### 🕹️ Controles
-- **Tecla Q**: Coleta queijos próximos à sua posição atual
+- **Tecla Q**: Coleta estrelas próximos à sua posição atual
 - **Tecla H**: Abre/fecha o sistema de ajuda com todas as informações do jogo
 - **Tecla T**: Inicia o tutorial interativo (disponível para novos jogadores)
 
-### 🧀 Tipos de Queijo
+### ★ Tipos de Estrelas
 
-#### 🟢 Queijo Público (Verde)
+#### 🟢 Estrelas Público (Verde)
 - **Cor**: Verde brilhante
 - **Efeito**: Vai para sua bolsa pessoal E contribui para o **pote compartilhado**
 - **Partícula**: Efeito visual verde intenso
-- **Probabilidade**: 60% dos queijos são públicos
+- **Probabilidade**: 60% dos Estrelas são públicos
 - **Spawn**: Aparecem em pares estratégicos próximos um do outro
 
-#### 🟡 Queijo Privado (Amarelo)  
+#### 🟡 Estrelas Privado (Amarelo)  
 - **Cor**: Amarelo dourado
 - **Efeito**: Vai apenas para sua bolsa pessoal
 - **Partícula**: Efeito visual amarelo brilhante
-- **Probabilidade**: 40% dos queijos são privados
+- **Probabilidade**: 40% das estrelas são privadas
 - **Spawn**: Posicionamento individual aleatório
 
 ### 💰 Sistema de Pote Compartilhado
 
 O **pote** é um recurso coletivo que todos os jogadores contribuem e se beneficiam:
 
-- **Contribuição**: Cada queijo público coletado adiciona pontos ao pote (multiplicado pela escassez atual)
+- **Contribuição**: Cada estrela público coletado adiciona pontos ao pote (multiplicado pela escassez atual)
 - **Meta**: Quando o pote atinge **20 pontos**, todos ganham!
 - **Recompensa**: O pote é multiplicado por 1.5x e dividido igualmente entre todos os jogadores
 - **Falha**: Se a meta não for atingida, a escassez diminui e o pote é zerado
-- **Coleta Automática**: Queijos são automaticamente removidos quando coletados
+- **Coleta Automática**: Estrelas são automaticamente removidos quando coletados
 
 ## 🏆 Sistema de Ranking
 
 ### 📊 Cálculo de Pontuação
 Cada jogador tem um **score individual** calculado com base em:
 
-- **Queijos Públicos**: +2 pontos cada (valoriza cooperação)
-- **Queijos Privados**: +1 ponto cada (valor individual)
+- **Estrelas Públicos**: +2 pontos cada (valoriza cooperação)
+- **Estrelas Privados**: +1 ponto cada (valor individual)
 - **Bônus de Cooperação**: Multiplicador baseado na cooperação geral da sala
 - **Participação**: Bonus por estar ativo no jogo
 
@@ -65,25 +65,25 @@ A cada rodada, um evento aleatório afeta a jogabilidade:
 
 ### 🌟 Aurora
 - **Efeito**: Diminui a escassez em 0.1 (mínimo 0.5)
-- **Resultado**: Queijos públicos valem mais para o pote
+- **Resultado**: Estrelas públicos valem mais para o pote
 
 ### 🏜️ Seca  
 - **Efeito**: Aumenta a escassez em 0.2
-- **Resultado**: Queijos públicos valem menos para o pote
+- **Resultado**: Estrelas públicos valem menos para o pote
 
 ### 👮 Fiscalização
-- **Efeito**: Remove 50% dos queijos privados de todos os jogadores
+- **Efeito**: Remove 50% dos Estrelas privados de todos os jogadores
 - **Resultado**: Perda de recursos pessoais
 
 ### 💧 Vazamento Privado
-- **Efeito**: 25% dos queijos privados de cada jogador vão para o pote
+- **Efeito**: 25% dos Estrelas privados de cada jogador vão para o pote
 - **Resultado**: Conversão de recursos privados em públicos
 
 ### 🎁 Doação
 - **Efeito**: Adiciona 2 pontos ao pote para cada jogador
 - **Resultado**: Impulso gratuito no pote compartilhado
 
-### 🌪️ Queijofuracão
+### 🌪️ Starfuracão
 - **Efeito**: Evento neutro (sem efeitos especiais)
 - **Resultado**: Rodada normal
 
@@ -97,7 +97,7 @@ A cada rodada, um evento aleatório afeta a jogabilidade:
 
 ### 📚 Etapas do Tutorial
 1. **Básicos**: Movimento e controles fundamentais
-2. **Coleta**: Como coletar queijos e diferenças entre tipos
+2. **Coleta**: Como coletar estrelas e diferenças entre tipos
 3. **Cooperação**: Sistema de pote compartilhado e estratégia
 4. **Eventos**: Explicação dos eventos aleatórios
 5. **Ranking**: Como funciona o sistema de pontuação
@@ -105,13 +105,13 @@ A cada rodada, um evento aleatório afeta a jogabilidade:
 ## �🔄 Progressão do Jogo
 
 ### 📈 Escalabilidade por Rodada
-- **Queijos por rodada**: Começa com 4 e aumenta 2 a cada rodada (máximo 12)
+- **Estrelas por rodada**: Começa com 4 e aumenta 2 a cada rodada (máximo 12)
 - **Fórmula**: `min(4 + (rodada - 1) * 2, 12)`
 
 ### ⏱️ Tempo por Rodada
 - **Duração**: 30 segundos por rodada
-- **Spawn**: Novos queijos aparecem a cada 0.5 segundos
-- **Estratégico**: Queijos públicos spawnam em pares próximos
+- **Spawn**: Novas Estrelas aparecem a cada 0.5 segundos
+- **Estratégico**: Estrelas públicos spawnam em pares próximos
 
 ### 🗺️ Mapas
 O jogo rotaciona entre 5 mapas diferentes:
@@ -124,19 +124,19 @@ O jogo rotaciona entre 5 mapas diferentes:
 ## 💡 Estratégias Avançadas
 
 ### 🤝 Cooperação Estratégica
-- **Foque nos queijos públicos** quando o pote estiver próximo de 20
+- **Foque nos Estrelas públicos** quando o pote estiver próximo de 20 o jogo acaba!!
 - **Coordene com outros jogadores** através do chat
 - **Monitore o ranking** para ver quem está cooperando mais
-- **Aproveite pares de queijos públicos** para maximizar eficiência
+- **Aproveite pares de Estrelas públicos** para maximizar eficiência
 
 ### 📊 Gerenciamento de Recursos
-- **Queijos privados** são sua segurança pessoal
-- **Queijos públicos** são investimento no grupo E no seu ranking
+- **Estrelas privados** são sua segurança pessoal
+- **Estrelas públicos** são investimento no grupo E no seu ranking
 - **Balance** entre ganho pessoal e coletivo para maximizar score
 - **Considere eventos** na sua estratégia de coleta
 
 ### 🎯 Otimização de Ranking
-- **Priorize queijos públicos** para melhor score (valem 2x)
+- **Priorize estrelas públicos** para melhor score (valem 2x)
 - **Mantenha participação ativa** para bonus
 - **Colabore para aumentar** o multiplicador de cooperação da sala
 - **Adapte estratégia** baseada na posição atual no ranking
@@ -152,8 +152,8 @@ O jogo rotaciona entre 5 mapas diferentes:
 - **Indicadores de cooperação** da sala
 
 ### 🎨 Elementos Visuais Aprimorados
-- **Queijos verdes**: Públicos com partículas verdes intensas e spawn em pares
-- **Queijos amarelos**: Privados com partículas amarelas brilhantes
+- **Estrelas verdes**: Públicos com partículas verdes intensas e spawn em pares
+- **Estrelas amarelos**: Privados com partículas amarelas brilhantes
 - **Interface responsiva**: Painel superior com informações organizadas
 - **Sistema de cores**: Diferentes cores para diferentes posições no ranking
 - **Feedback visual**: Efeitos especiais para coletas e eventos
@@ -169,16 +169,16 @@ O jogo rotaciona entre 5 mapas diferentes:
 ### 📊 Rastreamento de Ações
 O jogo monitora e registra automaticamente:
 
-- **Coletas de queijos**: Tipo, posição, timing de cada coleta
+- **Coletas de Estrelas**: Tipo, posição, timing de cada coleta
 - **Eventos aplicados**: Qual evento afetou cada jogador e quando
 - **Performance por rodada**: Scores, cooperação, participação
 - **Movimentação de recursos**: Transferências entre potes e jogadores
 - **Sessões de jogo**: Duração, número de rodadas, participantes
 
 ### 🔍 Métricas Calculadas
-- **Taxa de cooperação individual**: Percentual de queijos públicos vs privados
+- **Taxa de cooperação individual**: Percentual de estrelas públicos vs privados
 - **Taxa de cooperação da sala**: Média geral de colaboração
-- **Eficiência de coleta**: Sucesso na coleta vs queijos disponíveis
+- **Eficiência de coleta**: Sucesso na coleta vs estrelas disponíveis
 - **Impacto de eventos**: Como cada evento afeta diferentes jogadores
 - **Evolução temporal**: Mudanças de estratégia ao longo das rodadas
 
@@ -238,7 +238,7 @@ Todas as ações são registradas com:
 - **Auto-nova partida**: Desabilitado, controlado pelo script
 - **Morte por AFK**: Desabilitada para não interromper sessões
 - **Garbage collection**: Otimizada para evitar lag
-- **Spawn inteligente**: Algoritmo eficiente para posicionamento de queijos
+- **Spawn inteligente**: Algoritmo eficiente para posicionamento de Estrelas
 
 ### 🔢 Parâmetros Balanceados
 - **Raio de coleta**: 30 pixels (testado e otimizado)
@@ -246,7 +246,7 @@ Todas as ações são registradas com:
 - **Meta do pote**: 20 pontos (desafio apropriado)
 - **Multiplicador de recompensa**: 1.5x (incentivo à cooperação)
 - **Intervalo de spawn**: 500ms (fluidez ideal)
-- **Spawn em pares**: Queijos públicos aparecem próximos para estratégia
+- **Spawn em pares**: Estrelas públicos aparecem próximos para estratégia
 
 ### 📊 Balanceamento de Jogo
 - **Probabilidades ajustadas**: 60% público / 40% privado após extensos testes
@@ -260,14 +260,14 @@ Todas as ações são registradas com:
 1. **Faça o tutorial completo** antes de jogar (tecla T)
 2. **Use o sistema de ajuda** durante o jogo (tecla H)
 3. **Observe outros jogadores** para aprender estratégias
-4. **Comece focando queijos privados** para segurança
+4. **Comece focando estrelas privados** para segurança
 5. **Gradualmente coopere mais** conforme entende o jogo
 
 ### 🧠 Para Jogadores Experientes
 1. **Monitore o ranking em tempo real** para ajustar estratégia
 2. **Antecipe eventos** e adapte coleta accordingly
 3. **Coordene com outros jogadores** para maximizar potes
-4. **Use pares de queijos públicos** para eficiência máxima
+4. **Use pares de estrelas públicos** para eficiência máxima
 5. **Balance individual vs cooperativo** baseado na situação
 
 ### 🤝 Para Grupos Organizados
@@ -314,7 +314,7 @@ Desenvolvido como um experimento avançado em jogos cooperativos e teoria dos jo
 - ✅ **Analytics e Logging Detalhado** para análise comportamental
 - ✅ **Tutorial Interativo** para onboarding de novos jogadores
 - ✅ **Sistema de Ajuda Integrado** sempre acessível
-- ✅ **Spawn Estratégico** de queijos em pares para cooperação
+- ✅ **Spawn Estratégico** de estrelas em pares para cooperação
 - ✅ **Coleta Automática** com feedback visual aprimorado
 - ✅ **Balanceamento Dinâmico** baseado no número de jogadores
 - ✅ **Interface Responsiva** com informações em tempo real
