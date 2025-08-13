@@ -202,6 +202,9 @@ function init()
             spatialPreferences = {}
         }
     end
+    
+    pot = 0
+    roundNumber = 0
 
     showTutorial()
     newRound()
@@ -237,7 +240,6 @@ function newRound()
     
     starList = {}
     starID = 0
-    pot = 0
     roundNumber = roundNumber + 1
 
     -- Remove tutorial se existir
@@ -309,7 +311,7 @@ function spawnStar()
                     local py = math.max(80, math.min(mapHeight - 80, pairArea.y + math.random(-20, 20)))
                     if isValidSpawnLocation(px, py) then
                         local pairIsPublic = not isPublic
-                        local pairSymbol = "★" -- O par também é uma estrela
+                        local pairSymbol = "★"
                         local pairColor = pairIsPublic and 0x55FF55 or 0xFFDD00
 
                         starID = starID + 1
@@ -328,6 +330,7 @@ function spawnStar()
             idx = idx + 1
         end
     else
+        --FIXME: eu acredito que ele esteja sempre caindo nesse fallback
         -- Fallback (mapa sem XML analisável)
         while #starList < targetStars and attempts < 100 do
             attempts = attempts + 1
@@ -339,13 +342,11 @@ function spawnStar()
                 local color = isPublic and 0x55FF55 or 0xFFDD00
 
                 starID = starID + 1
-                -- Cria objeto invisível para colisão
                 tfm.exec.addPhysicObject(10000 + starID, x, y, {
                     type = 12, width = 35, height = 35,
                     foreground = true, friction = 0.3, restitution = 0.2,
                     angle = 0, color = 0x000000, alpha = 0.01
                 })
-                -- Adiciona o símbolo ASCII como texto
                 ui.addTextArea(20000 + starID, "<p align='center'><font size='20' color='#" .. string.format("%06X", color) .. "'><b>" .. symbol .. "</b></font></p>", nil, x-17, y-17, 35, 35, 0, 0, 0, false)
                 table.insert(starList, { id = starID, x = x, y = y, public = isPublic })
             end
@@ -379,7 +380,7 @@ function showHelp(name)
     helpText = helpText .. "<j>★ ESTRELAS VERDES:</j> Vao para o pote comum (2 pontos)\n"
     helpText = helpText .. "<o>★ ESTRELAS AMARELAS:</o> Ficam so para voce (1 ponto)\n\n"
     helpText = helpText .. "<b>* OBJETIVO:</b> Maior pontuacao individual\n"
-    helpText = helpText .. "<b>! POTE:</b> Se chegar a 20, todos ganham bonus!\n"
+    helpText = helpText .. "<b>! POTE:</b> Se chegar a 20, o jogo acaba e todos ganham bonus!\n"
     helpText = helpText .. "<b>+ ESTRATEGIA:</b> Coletar um item remove o par oposto\n\n"
     helpText = helpText .. "<b>= CONTROLES:</b>\n"
     helpText = helpText .. "• <v>Pressione <v>[Q]</v> proximo\n"
@@ -452,9 +453,16 @@ function tryPickStar(name, x, y)
                 bagPrivate[name] = bagPrivate[name] + 1
             end
 
+            --TODO: ele verifica a meta e desliga o script?? eu acho que deve mostrar o ranking em!!!
+            if pot >= 20 then
+                endGame()
+                return
+            end
+
             -- Remove a estrela coletada
             tfm.exec.removePhysicObject(10000 + c.id)
             ui.removeTextArea(20000 + c.id, nil) -- Remove símbolo ASCII
+            local removedId = c.id
             table.remove(starList, i)
 
             -- Busca e remove estrela do tipo oposto mais próxima
@@ -465,7 +473,7 @@ function tryPickStar(name, x, y)
                 ui.removeTextArea(20000 + oppositeStar.id, nil) -- Remove símbolo ASCII do par
                 table.remove(starList, oppositeIndex)
             end
-
+            
             calculateRoomCooperation()
             updateUI()
             break
@@ -476,20 +484,11 @@ end
 -- 🏁 Fim da rodada
 function endRound()
     if pot >= 20 then
-        pot = math.floor(pot * 1.5)
-        local count = 0
-        for _ in pairs(tfm.get.room.playerList) do count = count + 1 end
-        local div = math.floor(pot / count)
-        for name in pairs(tfm.get.room.playerList) do
-            bagPublic[name] = bagPublic[name] + div
-            logPlayerAction(name, "pot_bonus", {bonus = div})
-        end
-    else
-        scarcity = math.max(0.5, scarcity - 0.1)
-        pot = 0
+        endGame()
+        return
     end
 
-    -- Atualiza rankings
+    -- Atualiza rankings (pode ser removido se for apenas no final)
     updatePlayerRankings()
 
     -- Inicia nova rodada diretamente
@@ -501,16 +500,6 @@ function eventLoop(current, remaining)
     if current > nextSpawn then
         spawnStar()
         nextSpawn = current + 500
-    end
-
-    -- Remove tutorial automaticamente após 10 segundos
-    if current % 10000 == 0 then
-        ui.removeTextArea(999, nil) -- Remove tutorial
-    end
-
-    -- Remove ajuda após 15 segundos
-    if current % 15000 == 0 then
-        ui.removeTextArea(995, nil)
     end
 
     if remaining <= 0 then
@@ -541,7 +530,16 @@ end
 function calculatePlayerScore(name)
     local publicStars = bagPublic[name] or 0
     local privateStars = bagPrivate[name] or 0
-    local potBonus = (pot >= 20) and (#tfm.get.room.playerList * 2) or 0
+    
+    local potBonus = 0
+    if pot >= 20 then
+        local count = 0
+        for _ in pairs(tfm.get.room.playerList) do count = count + 1 end
+        if count > 0 then
+            potBonus = math.floor((pot * 1.5) / count)
+        end
+    end
+
     return (publicStars * 2) + (privateStars * 1) + potBonus
 end
 
@@ -576,6 +574,9 @@ end
 
 -- 🎯 Fim do jogo
 function endGame()
+    if roundNumber > maxRounds then return end
+    roundNumber = maxRounds + 1
+
     updatePlayerRankings()
 
     -- Encontra vencedor
@@ -615,11 +616,14 @@ end
 -- Cerimônia de encerramento
 function announceWinner(winner, score, cooperative, individualistic)
     local finalText = "<p align='center'><font size='18'><b>*** FIM DE JOGO! ***</b></font>\n\n"
-    finalText = finalText .. "<font size='14'><b>* VENCEDOR: <j>" .. winner .. "</j> *</b>\n"
-    finalText = finalText .. "<b>-> Pontuacao: <j>" .. score .. "</j> <-</b>\n\n"
+    if pot >= 20 then
+        finalText = finalText .. "<font size='14'><vp>META COOPERATIVA ATINGIDA!</vp></font>\n"
+    end
+    finalText = finalText .. "<font size='14'><b>* VENCEDOR: <j>" .. tostring(winner) .. "</j> *</b>\n"
+    finalText = finalText .. "<b>-> Pontuacao: <j>" .. tostring(score) .. "</j> <-</b>\n\n"
     finalText = finalText .. "<font size='12'>"
-    finalText = finalText .. "<b>* Mais Cooperativo:</b> <vp>" .. cooperative .. "</vp>\n"
-    finalText = finalText .. "<b>+ Mais Individualista:</b> <o>" .. individualistic .. "</o>\n\n"
+    finalText = finalText .. "<b>* Mais Cooperativo:</b> <vp>" .. tostring(cooperative) .. "</vp>\n"
+    finalText = finalText .. "<b>+ Mais Individualista:</b> <o>" .. tostring(individualistic) .. "</o>\n\n"
 
     finalText = finalText .. "<b>=== RANKING FINAL ===</b>\n"
     local sortedPlayers = {}
@@ -654,7 +658,7 @@ end
 
 -- Interface com ranking em tempo real
 function updateUI()
-    local text = "<p align='center'><font size='12'><b>*** Star Race ***</b>  "
+    local text = "<p align='center'><font size='12'><b>*** Star Race ***</b>  "
     local qntdIndividual = 0
     local playerCount = 0
     for _ in pairs(tfm.get.room.playerList) do playerCount = playerCount + 1 end
@@ -673,8 +677,8 @@ function updateUI()
     elseif eventName == "ChuvaDeEstrelas" then eventIcon = "#"
     end
 
-    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
-                                  eventIcon, eventName, roundNumber, maxRounds, math.floor(pot), qntdIndividual)
+    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
+                                 eventIcon, eventName, roundNumber, maxRounds, math.floor(pot), qntdIndividual)
 
     -- Barra visual de cooperação
     local coopBars = math.floor(roomCooperation / 10)
