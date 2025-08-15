@@ -666,81 +666,33 @@ function announceWinner(winner, score, cooperative, individualistic)
 end
 
 -- Interface com ranking em tempo real
+-- Interface com ranking em tempo real
 function updateUI()
-    local text = "<p align='center'><font size='12'><b>*** Star Race ***</b>  "
-    local qntdIndividual = 0
-    local playerCount = 0
-    for _ in pairs(tfm.get.room.playerList) do playerCount = playerCount + 1 end
-    if playerCount > 0 then
-        qntdIndividual = math.floor(pot / playerCount)
-    end
+ local players = {}
+ for name in pairs(tfm.get.room.playerList) do
+    table.insert(players, { name = name, score = calculatePlayerScore(name) })
+ end
+ table.sort(players, function(a, b) return a.score > b.score end)
 
+ local playerRanks = {}
+ for i, pData in ipairs(players) do playerRanks[pData.name] = i end
 
-    -- Adiciona indicador visual do evento
-    local eventIcon = ""
-    if eventName == "Aurora" then eventIcon = "+"
-    elseif eventName == "Seca" then eventIcon = "-"
-    elseif eventName == "Fiscalizacao" then eventIcon = "!"
-    elseif eventName == "VazamentoPrivado" then eventIcon = "~"
-    elseif eventName == "Doacao" then eventIcon = "*"
-    elseif eventName == "ChuvaDeEstrelas" then eventIcon = "#"
-    end
+ local potValue = math.floor(pot)
 
-    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
-                                    eventIcon, eventName, roundNumber, maxRounds, math.floor(pot), qntdIndividual)
+ for name in pairs(tfm.get.room.playerList) do
+   local myRank = playerRanks[name] or 0
+   local myPublic = bagPublic[name] or 0
+   local myPrivate = bagPrivate[name] or 0
+   local myScore = calculatePlayerScore(name)
 
-    -- Barra visual de cooperação
-    local coopBars = math.floor(roomCooperation / 10)
-    local coopVisual = ""
-    for i = 1, 10 do
-        if i <= coopBars then
-            coopVisual = coopVisual .. "<vp>#</vp>"
-        else
-            coopVisual = coopVisual .. "<n>-</n>"
-        end
-    end
-    text = text .. string.format("<n>Cooperacao: %s <v>%.1f%%</v>\n", coopVisual, roomCooperation)
-    text = text .. "<font size='11'>"
-
-    local players = {}
-    for name in pairs(tfm.get.room.playerList) do
-        local pub = bagPublic[name] or 0
-        local pri = bagPrivate[name] or 0
-        local score = calculatePlayerScore(name)
-        table.insert(players, {
-            name = name,
-            public = pub,
-            private = pri,
-            score = score
-        })
-    end
-
-    table.sort(players, function(a, b) return a.score > b.score end)
-
-    for i, player in ipairs(players) do
-        local medal = ""
-        if i == 1 then medal = "<j>* </j>"
-        elseif i == 2 then medal = "<vp>+ </vp>"
-        elseif i == 3 then medal = "<o>- </o>"
-        else medal = "<n>" .. i .. ". </n>"
-        end
-
-        -- Indicador de tendência comportamental
-        local tendency = ""
-        local total = player.public + player.private
-        if total > 0 then
-            local ratio = player.public / total
-            if ratio > 0.7 then tendency = "<vp>*</vp>"
-            elseif ratio < 0.3 then tendency = "<o>+</o>"
-            else tendency = "<j>-</j>"
-            end
-        end
-
-        text = text .. string.format("%s%s %s: <vp>%d Pub</vp> | <o>%d Pri</o> | <j>%d pts</j>\n",
-                                        medal, tendency, player.name, player.public, player.private, player.score)
-    end
-
-    ui.addTextArea(0, text, name, 10, 30, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.7, true)
+       local text = string.format("<p align='center'><font size='11'>" ..
+        "<n>Rodada:</n> <j>%d/%d</j> | <n>Pote:</n> <j>%d/20</j> | <n>Evento:</n> <j>%s</j> | <n>Coop:</n> <v>%.1f%%</v> | " ..
+        "<n>Sua Posição:</n> <j>%dº</j> | <n>Estrelas:</n> <vp>%d</vp>/<o>%d</o> | <n>Pontos:</n> <j>%d</j>" ..
+        "</font></p>",
+        roundNumber, maxRounds, potValue, eventName, roomCooperation, myRank, myPublic, myPrivate, myScore
+       )
+       ui.addTextArea(0, text, name, 10, 30, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.7, true)
+  end
 end
 
 -- 👤 Novos jogadores
