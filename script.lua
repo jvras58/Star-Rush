@@ -20,6 +20,7 @@ local nextSpawn = 0
 local eventName = ""
 local roundNumber = 0
 local maxRounds = 6 -- Limite de rodadas
+local isGameOver = false -- Variavel de controle para o fim de jogo
 local events = {"Seca", "Aurora", "Fiscalizacao", "VazamentoPrivado", "Doacao", "ChuvaDeEstrelas"}
 
 -- 📊 Sistema de coleta de dados
@@ -86,6 +87,7 @@ function generateValidSpawnAreas(mapWidth, mapHeight)
 
     -- fallback de segurança
     if #validSpawnAreas == 0 then
+        -- Isso pode acontecer em mapas sem plataformas ou com XML malformado
         for i = 1, 8 do
             table.insert(validSpawnAreas, {
                 x = math.random(80, mapWidth - 80),
@@ -97,35 +99,41 @@ end
 
 -- 🔍 Verifica se uma posição é válida (topo de plataforma / livre)
 function isValidSpawnPosition(x, y)
-    -- Testa relação com grounds
+    local isOnPlatform = false
+    -- 1. Verifica se a posição (x, y) está em cima de alguma plataforma
     for _, ground in pairs(mapGrounds) do
-        local dx = math.abs(x - ground.x)
-        local dy = math.abs(y - ground.y)
-
-        -- Perto ou dentro do retângulo do ground (com margem)
-        if dx < (ground.width / 2 + 30) and dy < (ground.height / 2 + 30) then
-            -- Topo do ground (plataforma)
-            local topY = ground.y - ground.height / 2
-            if y <= topY + 40 and y >= topY - 10 then
-                return true
-            else
-                return false
+        local gLeft = ground.x - ground.width / 2
+        local gRight = ground.x + ground.width / 2
+        local gTop = ground.y - ground.height / 2
+        
+        -- Verifica se o X está dentro dos limites horizontais do ground
+        if x > gLeft and x < gRight then
+            -- Verifica se o Y está ligeiramente acima da superfície do ground (numa "fatia" de 50 pixels)
+            if y > gTop - 40 and y < gTop + 10 then
+                isOnPlatform = true
+                break -- Encontrou uma plataforma válida, pode parar de procurar
             end
         end
     end
 
-    -- Evita colisão visual com decorações
+    -- Se não encontrou nenhuma plataforma, a posição é inválida
+    if not isOnPlatform then
+        return false
+    end
+
+    -- 2. Se está numa plataforma, verifica se não colide com decorações
     for _, decoration in pairs(mapDecorations) do
         local dx = math.abs(x - decoration.x)
         local dy = math.abs(y - decoration.y)
         if dx < 25 and dy < 25 then
-            return false
+            return false -- Colide com decoração, posição inválida
         end
     end
 
-    -- Livre de obstáculos → permitido
+    -- Passou por todas as verificações: está numa plataforma e longe de decorações
     return true
 end
+
 
 -- 🔍 Verifica se posição é válida para spawn
 function isValidSpawnLocation(x, y)
@@ -205,6 +213,7 @@ function init()
     
     pot = 0
     roundNumber = 0
+    isGameOver = false -- Reseta o estado do jogo
 
     showTutorial()
     newRound()
@@ -233,6 +242,8 @@ end
 
 -- 🔁 Nova rodada (usa análise de XML do mapa)
 function newRound()
+    if isGameOver then return end
+
     -- Remove todos os símbolos ASCII da rodada anterior
     for i = 1, starID do
         ui.removeTextArea(20000 + i, nil)
@@ -263,7 +274,7 @@ end
 
 -- Spawn de estrelas usando análise do mapa
 function spawnStar()
-    if not tfm.get.room.xmlMapInfo then return end
+    if not tfm.get.room.xmlMapInfo or isGameOver then return end
 
     local mapWidth  = tfm.get.room.xmlMapInfo.width  or 800
     local mapHeight = tfm.get.room.xmlMapInfo.height or 400
@@ -289,17 +300,15 @@ function spawnStar()
 
             if isValidSpawnLocation(x, y) then
                 local isPublic = math.random() < 0.6
-                local symbol = "★" -- Sempre uma estrela
-                local color = isPublic and 0x55FF55 or 0xFFDD00 -- Verde para pública, Amarela para privada
+                local symbol = "★"
+                local color = isPublic and 0x55FF55 or 0xFFDD00 
 
                 starID = starID + 1
-                -- Cria objeto invisível para colisão
                 tfm.exec.addPhysicObject(10000 + starID, x, y, {
                     type = 12, width = 35, height = 35,
                     foreground = true, friction = 0.3, restitution = 0.2,
                     angle = 0, color = 0x000000, alpha = 0.01
                 })
-                -- Adiciona o símbolo ASCII como texto
                 ui.addTextArea(20000 + starID, "<p align='center'><font size='20' color='#" .. string.format("%06X", color) .. "'><b>" .. symbol .. "</b></font></p>", nil, x-17, y-17, 35, 35, 0, 0, 0, false)
                 table.insert(starList, { id = starID, x = x, y = y, public = isPublic })
 
@@ -315,13 +324,11 @@ function spawnStar()
                         local pairColor = pairIsPublic and 0x55FF55 or 0xFFDD00
 
                         starID = starID + 1
-                        -- Cria objeto invisível para colisão
                         tfm.exec.addPhysicObject(10000 + starID, px, py, {
                             type = 12, width = 35, height = 35,
                             foreground = true, friction = 0.3, restitution = 0.2,
                             angle = 0, color = 0x000000, alpha = 0.01
                         })
-                        -- Adiciona o símbolo ASCII como texto
                         ui.addTextArea(20000 + starID, "<p align='center'><font size='20' color='#" .. string.format("%06X", pairColor) .. "'><b>" .. pairSymbol .. "</b></font></p>", nil, px-17, py-17, 35, 35, 0, 0, 0, false)
                         table.insert(starList, { id = starID, x = px, y = py, public = pairIsPublic })
                     end
@@ -330,8 +337,7 @@ function spawnStar()
             idx = idx + 1
         end
     else
-        --FIXME: eu acredito que ele esteja sempre caindo nesse fallback
-        -- Fallback (mapa sem XML analisável)
+        -- Fallback (mapa sem XML analisável ou sem plataformas)
         while #starList < targetStars and attempts < 100 do
             attempts = attempts + 1
             local x = math.random(80, mapWidth - 80)
@@ -428,7 +434,7 @@ end
 
 -- 🧲 Sistema de coleta estratégica com remoção automática
 function tryPickStar(name, x, y)
-    if not x or not y then return end
+    if not x or not y or isGameOver then return end
     for i = #starList, 1, -1 do
         local c = starList[i]
         local dx = x - c.x
@@ -453,7 +459,7 @@ function tryPickStar(name, x, y)
                 bagPrivate[name] = bagPrivate[name] + 1
             end
 
-            --TODO: ele verifica a meta e desliga o script?? eu acho que deve mostrar o ranking em!!!
+            -- Verifica a meta do pote e encerra o jogo
             if pot >= 20 then
                 endGame()
                 return
@@ -462,7 +468,6 @@ function tryPickStar(name, x, y)
             -- Remove a estrela coletada
             tfm.exec.removePhysicObject(10000 + c.id)
             ui.removeTextArea(20000 + c.id, nil) -- Remove símbolo ASCII
-            local removedId = c.id
             table.remove(starList, i)
 
             -- Busca e remove estrela do tipo oposto mais próxima
@@ -488,35 +493,30 @@ function endRound()
         return
     end
 
-    -- Atualiza rankings (pode ser removido se for apenas no final)
     updatePlayerRankings()
-
-    -- Inicia nova rodada diretamente
     newRound()
 end
 
 -- ⏱️ Loop principal do jogo
 function eventLoop(current, remaining)
+    if isGameOver then return end
+
     if current > nextSpawn then
         spawnStar()
         nextSpawn = current + 500
     end
 
     if remaining <= 0 then
+        -- Quando o tempo acaba, se ainda não atingiu o máximo de rodadas, inicia a próxima
+        -- Se atingiu, encerra o jogo.
         if roundNumber >= maxRounds then
             endGame()
         else
             endRound()
         end
     end
-
-    -- Reinicia jogo automaticamente após fim
-    if remaining <= -15 and roundNumber >= maxRounds then
-        roundNumber = 0 -- Reset para reiniciar
-        ui.removeTextArea(996, nil) -- Remove tela final
-        init()
-    end
 end
+
 
 -- 🏆 Atualiza rankings dos jogadores
 function updatePlayerRankings()
@@ -540,6 +540,7 @@ function calculatePlayerScore(name)
         end
     end
 
+    -- Pontuação: 2 pontos por estrela pública, 1 ponto por privada, mais bônus do pote
     return (publicStars * 2) + (privateStars * 1) + potBonus
 end
 
@@ -574,9 +575,10 @@ end
 
 -- 🎯 Fim do jogo
 function endGame()
-    if roundNumber > maxRounds then return end
-    roundNumber = maxRounds + 1
-
+    -- Garante que a função só rode uma vez
+    if isGameOver then return end
+    isGameOver = true
+    
     updatePlayerRankings()
 
     -- Encontra vencedor
@@ -652,13 +654,20 @@ function announceWinner(winner, score, cooperative, individualistic)
     finalText = finalText .. "</font></p>"
 
     ui.addTextArea(996, finalText, nil, 50, 50, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
+    
+    -- Limpa as estrelas restantes do mapa
+    for _, star in pairs(starList) do
+        tfm.exec.removePhysicObject(10000 + star.id)
+        ui.removeTextArea(20000 + star.id, nil)
+    end
+    starList = {}
 
-    tfm.exec.setGameTime(15)
+    tfm.exec.setGameTime(15) -- Dá 15 segundos para os jogadores verem o resultado
 end
 
 -- Interface com ranking em tempo real
 function updateUI()
-    local text = "<p align='center'><font size='12'><b>*** Star Race ***</b>  "
+    local text = "<p align='center'><font size='12'><b>*** Star Race ***</b>  "
     local qntdIndividual = 0
     local playerCount = 0
     for _ in pairs(tfm.get.room.playerList) do playerCount = playerCount + 1 end
@@ -677,8 +686,8 @@ function updateUI()
     elseif eventName == "ChuvaDeEstrelas" then eventIcon = "#"
     end
 
-    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
-                                 eventIcon, eventName, roundNumber, maxRounds, math.floor(pot), qntdIndividual)
+    text = text .. string.format("<v>%s %s</v>  <n>| Rodada: <j>%d/%d</j> | Pote: <j>%d</j>/20 | Individual: <j>%d</j>\n",
+                                    eventIcon, eventName, roundNumber, maxRounds, math.floor(pot), qntdIndividual)
 
     -- Barra visual de cooperação
     local coopBars = math.floor(roomCooperation / 10)
@@ -728,10 +737,10 @@ function updateUI()
         end
 
         text = text .. string.format("%s%s %s: <vp>%d Pub</vp> | <o>%d Pri</o> | <j>%d pts</j>\n",
-                                      medal, tendency, player.name, player.public, player.private, player.score)
+                                        medal, tendency, player.name, player.public, player.private, player.score)
     end
 
-    ui.addTextArea(0, text, nil, 10, 28, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.8, true)
+    ui.addTextArea(0, text, name, 10, 30, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.7, true)
 end
 
 -- 👤 Novos jogadores
@@ -752,6 +761,7 @@ end
 
 -- ▶️ Início do mapa (garante XML disponível)
 function eventNewGame()
+    -- Analisa o XML no início de cada mapa novo
     analyzeMapXML()
 end
 
