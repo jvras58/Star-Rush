@@ -621,13 +621,16 @@ function announceWinner(winner, score, cooperative, individualistic)
     if pot >= 20 then
         finalText = finalText .. "<font size='14'><vp>META COOPERATIVA ATINGIDA!</vp></font>\n"
     end
-    finalText = finalText .. "<font size='14'><b>* VENCEDOR: <j>" .. tostring(winner) .. "</j> *</b>\n"
-    finalText = finalText .. "<b>-> Pontuacao: <j>" .. tostring(score) .. "</j> <-</b>\n\n"
+    finalText = finalText .. "<font size='14'><b>* VENCEDOR: <j>" .. tostring(winner) .. "</j> com <j>" .. tostring(score) .. "</j> pontos! *</b>\n\n"
+    
     finalText = finalText .. "<font size='12'>"
     finalText = finalText .. "<b>* Mais Cooperativo:</b> <vp>" .. tostring(cooperative) .. "</vp>\n"
     finalText = finalText .. "<b>+ Mais Individualista:</b> <o>" .. tostring(individualistic) .. "</o>\n\n"
 
-    finalText = finalText .. "<b>=== RANKING FINAL ===</b>\n"
+    finalText = finalText .. "<b>=== RANKING FINAL DETALHADO ===</b>\n"
+
+    finalText = finalText .. "<font face='Consolas,Monospace'><n>#  | NOME          | PONTOS | ESTRELAS (V/A) | COOP.% | MÉDIA/ESTRELA</n>\n"
+
     local sortedPlayers = {}
     for name in pairs(tfm.get.room.playerList) do
         table.insert(sortedPlayers, {name = name, score = playerScores[name] or 0})
@@ -638,61 +641,81 @@ function announceWinner(winner, score, cooperative, individualistic)
     for i, player in ipairs(sortedPlayers) do
         local pub = bagPublic[player.name] or 0
         local pri = bagPrivate[player.name] or 0
-        local medal = ""
-        if i == 1 then medal = "<j>* </j>"
-        elseif i == 2 then medal = "<vp>+ </vp>"
-        elseif i == 3 then medal = "<o>- </o>"
-        else medal = "<n>. </n>"
+        local totalStars = pub + pri
+        
+        --[[ ARREDONDAMENTO E FORMATAÇÃO DOS NÚMEROS ]]
+        local coopPercent = 0
+        local avgScorePerStar = 0.0
+        if totalStars > 0 then
+            coopPercent = (pub / totalStars) * 100
+            avgScorePerStar = player.score / totalStars
         end
+        -- Formata os números como strings ANTES de montar a linha final
+        local coopStr = string.format("%.1f%%", coopPercent) -- Ex: "58.1%"
+        local avgStr = string.format("%.2f", avgScorePerStar) -- Ex: "2.58"
+        local starsStr = string.format("(<vp>%d</vp>/<o>%d</o>)=%d", pub, pri, totalStars)
 
-        finalText = finalText .. string.format("%s%d. %s: %d pts (<vp>%d</vp>/<o>%d</o>)\n",
-                                                medal, i, player.name, player.score, pub, pri)
+        local rankColor = "<n>"
+        if i == 1 then rankColor = "<j>"
+        elseif i == 2 then rankColor = "<vp>"
+        elseif i == 3 then rankColor = "<o>"
+        end
+        
+        local rankLine = string.format("%s%-3s| %-13s | %-6d | %-14s | %-6s | %s</n>",
+            rankColor,
+            tostring(i),
+            string.sub(player.name, 1, 12), -- Limita o nome a 12 caracteres
+            player.score,
+            starsStr,
+            coopStr,
+            avgStr
+        )
+        finalText = finalText .. rankLine .. "\n"
     end
 
-    finalText = finalText .. "\n<v>= Cooperacao da Sala: " .. string.format("%.1f", roomCooperation) .. "% =</v>\n"
-    finalText = finalText .. "<font size='8'><n>===========================</n></font>"
+    finalText = finalText .. "</font>\n\n"
+    finalText = finalText .. "<v>= Cooperação Geral da Sala: " .. string.format("%.1f%%", roomCooperation) .. " =</v>\n"
+    finalText = finalText .. "<font size='8'><n>====================================</n></font>"
     finalText = finalText .. "</font></p>"
 
-    ui.addTextArea(996, finalText, nil, 50, 50, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
+    ui.addTextArea(996, finalText, nil, 50, 40, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
     
-    -- Limpa as estrelas restantes do mapa
     for _, star in pairs(starList) do
         tfm.exec.removePhysicObject(10000 + star.id)
         ui.removeTextArea(20000 + star.id, nil)
     end
     starList = {}
 
-    tfm.exec.setGameTime(15) -- Dá 15 segundos para os jogadores verem o resultado
+    tfm.exec.setGameTime(20)
 end
 
 -- Interface com ranking em tempo real
--- Interface com ranking em tempo real
 function updateUI()
- local players = {}
- for name in pairs(tfm.get.room.playerList) do
-    table.insert(players, { name = name, score = calculatePlayerScore(name) })
- end
- table.sort(players, function(a, b) return a.score > b.score end)
+    local players = {}
+    for name in pairs(tfm.get.room.playerList) do
+        table.insert(players, { name = name, score = calculatePlayerScore(name) })
+    end
+    table.sort(players, function(a, b) return a.score > b.score end)
 
- local playerRanks = {}
- for i, pData in ipairs(players) do playerRanks[pData.name] = i end
+    local playerRanks = {}
+    for i, pData in ipairs(players) do playerRanks[pData.name] = i end
 
- local potValue = math.floor(pot)
+    local potValue = math.floor(pot)
 
- for name in pairs(tfm.get.room.playerList) do
-   local myRank = playerRanks[name] or 0
-   local myPublic = bagPublic[name] or 0
-   local myPrivate = bagPrivate[name] or 0
-   local myScore = calculatePlayerScore(name)
+    for name in pairs(tfm.get.room.playerList) do
+        local myRank = playerRanks[name] or 0
+        local myPublic = bagPublic[name] or 0
+        local myPrivate = bagPrivate[name] or 0
+        local myScore = calculatePlayerScore(name)
 
-       local text = string.format("<p align='center'><font size='11'>" ..
-        "<n>Rodada:</n> <j>%d/%d</j> | <n>Pote:</n> <j>%d/20</j> | <n>Evento:</n> <j>%s</j> | <n>Coop:</n> <v>%.1f%%</v> | " ..
-        "<n>Sua Posição:</n> <j>%dº</j> | <n>Estrelas:</n> <vp>%d</vp>/<o>%d</o> | <n>Pontos:</n> <j>%d</j>" ..
-        "</font></p>",
-        roundNumber, maxRounds, potValue, eventName, roomCooperation, myRank, myPublic, myPrivate, myScore
-       )
-       ui.addTextArea(0, text, name, 10, 30, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.7, true)
-  end
+        local text = string.format("<p align='center'><font size='11'>" ..
+            "<n>Rodada:</n> <j>%d/%d</j> | <n>Pote:</n> <j>%d/20</j> | <n>Evento:</n> <j>%s</j> | <n>Coop:</n> <v>%.1f%%</v> | " ..
+            "<n>Sua Posição:</n> <j>%dº</j> | <n>Estrelas:</n> <vp>%d</vp>/<o>%d</o> | <n>Pontos:</n> <j>%d</j>" ..
+            "</font></p>",
+            roundNumber, maxRounds, potValue, eventName, roomCooperation, myRank, myPublic, myPrivate, myScore
+        )
+        ui.addTextArea(0, text, name, 10, 30, 780, nil, 0x1A1A1A, 0x1A1A1A, 0.7, true)
+    end
 end
 
 -- 👤 Novos jogadores
