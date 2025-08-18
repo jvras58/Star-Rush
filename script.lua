@@ -88,13 +88,11 @@ end
 function getMaxStarsPerRound() return math.min(4 + (roundNumber - 1) * 2, 12) end
 
 function init()
-function init()
     for name in pairs(tfm.get.room.playerList) do eventNewPlayer(name) end
     newRound()
 end
 
 -- Sistema de tutorial
-function showTutorial()
 function showTutorial()
     if roundNumber<=2 then
         local text="<p align='center'><font size='14'><b>=== TUTORIAL ===</b></font>\n\n<font size='12'>"
@@ -169,13 +167,11 @@ function spawnAllStarsForRound()
 end
 
 function eventKeyboard(name, key, down)
-function eventKeyboard(name, key, down)
     if key == 81 then local p=tfm.get.room.playerList[name]; if p then tryPickStar(name,p.x,p.y) end
     elseif key == 72 and down then showHelp(name)
 end
 
 -- 📋 Sistema de ajuda
-function showHelp(name)
 function showHelp(name)
     local text = "<p align='center'><font size='12'><b>[== AJUDA ==]</b></font>\n\n<font size='10'>"
     text=text .. "<j>★ VERDES:</j> 2pts (pote)\n<o>★ AMARELAS:</o> 1pt (você)\n\n"
@@ -186,7 +182,6 @@ end
 
 -- 🎲 Evento aleatório com balanceamento dinâmico
 function applyEvent(name)
-function applyEvent(name)
     local pCount=0; for _ in pairs(tfm.get.room.playerList) do pCount=pCount+1 end
     if name=="Aurora" then scarcity=math.max(0.5,scarcity-0.1)
     elseif name=="Seca" then scarcity=scarcity+(0.2*math.min(pCount/4,1))
@@ -194,6 +189,7 @@ function applyEvent(name)
     elseif name=="VazamentoPrivado" then for p in pairs(tfm.get.room.playerList) do pot=pot+(bagPrivate[p]*0.25) end
     elseif name=="Doacao" then pot=pot+(2*math.max(1,pCount/2)) end
 end
+
 function tryPickStar(name, x, y)
     if not x or not y or isGameOver then return end
     if not x or not y or isGameOver then return end
@@ -223,19 +219,16 @@ end
 
 -- 🏆 Calcula pontuação do jogador
 function calculatePlayerScore(name)
-function calculatePlayerScore(name)
     local pub,priv,bonus = bagPublic[name]or 0,bagPrivate[name]or 0,0
     if pot>=20 then local c=0; for _ in pairs(tfm.get.room.playerList) do c=c+1 end; if c>0 then bonus=math.floor((pot*1.5)/c) end end
     return(pub*2)+priv+bonus
 end
-function calculateRoomCooperation()
 function calculateRoomCooperation()
     local totPub,totPriv = 0,0
     for n in pairs(tfm.get.room.playerList) do totPub=totPub+(bagPublic[n]or 0); totPriv=totPriv+(bagPrivate[n]or 0) end
 end
 
 -- 📊 Sistema de logging comportamental
-function logPlayerAction(player, action, data)
 function logPlayerAction(player, action, data)
     if not gameData[player] then gameData[player]={} end
     table.insert(gameData[player],{p=player,r=roundNumber,a=action,st=data.star_type,pos=data.position,ps=pot,e=eventName,t=os.time()})
@@ -257,6 +250,7 @@ function announceWinner(winner, score, cooperative, individualistic, playerScore
 
     for i, pData in ipairs(sortedPlayers) do
         local pub = bagPublic[pData.name] or 0
+        local pri = bagPrivate[pData.name] or 0
         local total = pub + pri
         local total = pub + pri
         local coop = 0
@@ -284,7 +278,7 @@ function announceWinner(winner, score, cooperative, individualistic, playerScore
     text=text.."</font>\n\n<v>= Coop. Geral: "..string.format("%.1f%%", roomCooperation).." =</v></font></p>"
     ui.addTextArea(996, text, nil, 50, 40, 700, 380, 0x1A1A1A, 0x7F7F7F, 0.95, true)
 end
-function updateUI()
+
 function updateUI()
     if isGameOver then return end
     local players={}; for n in pairs(tfm.get.room.playerList) do table.insert(players,{name=n,score=calculatePlayerScore(n)}) end
@@ -302,14 +296,12 @@ end
 
 -- 👤 Novos jogadores
 function eventNewPlayer(name)
-function eventNewPlayer(name)
     bagPublic[name],bagPrivate[name]=0,0
     playerStats[name]={cooperationRatio=0,totalActions=0,reactionTimes={},spatialPreferences={}}
     updateUI()
 end
 
 -- ▶️ Início do mapa (garante XML disponível)
-function eventNewGame()
 function eventNewGame()
 end
 
