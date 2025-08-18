@@ -73,7 +73,6 @@ function isDistantFromOtherStars(x, y)
     return true
 end
 
--- 🔍 Encontra Estrela do tipo oposto mais próxima
 function findNearestOppositeType(targetX, targetY, targetType)
     local nearestIndex, minDistance = nil, 80^2
     for i, star in ipairs(starList) do
@@ -89,30 +88,29 @@ function getMaxStarsPerRound() return math.min(4 + (roundNumber - 1) * 2, 12) en
 
 function init()
     for name in pairs(tfm.get.room.playerList) do eventNewPlayer(name) end
+    pot, roundNumber, isGameOver = 0, 0, false
     newRound()
 end
 
--- Sistema de tutorial
 function showTutorial()
     if roundNumber<=2 then
         local text="<p align='center'><font size='14'><b>=== TUTORIAL ===</b></font>\n\n<font size='12'>"
         if roundNumber==1 then text=text .. "<j>★ VERDES:</j> para o pote\n<o>★ AMARELAS:</o> para você\n\n<v>Pressione Q!</v>"
         else text=text .. "<j>★ POTE ★:</j> 20 estrelas = bônus!\n<r>! DILEMA:</r> Cooperar ou competir?\n" end
         text=text .. "\n\n<font size='10'><r>+ ESC para fechar +</r></font></font></p>"
+        ui.addTextArea(999, text, nil, 100, 100, 600, 220, 0x1A1A1A, 0x7F7F7F, 0.9, true)
     end
 end
 
--- 🔁 Nova rodada (usa análise de XML do mapa)
 function newRound()
     if isGameOver then return end
-    if isGameOver then return end
     for i=1,starID do tfm.exec.removePhysicObject(10000+i); ui.removeTextArea(20000+i,nil) end
+    starList, starID, isMapReady = {}, 0, false
     roundNumber = roundNumber + 1
     ui.removeTextArea(999, nil)
     tfm.exec.newGame(mapas[math.random(#mapas)])
     eventName = events[math.random(#events)]
     applyEvent(eventName)
-    tfm.exec.setGameTime(30)
     tfm.exec.setGameTime(30)
 end
 
@@ -162,6 +160,7 @@ function spawnAllStarsForRound()
         while #starList<target and idx<=#shuffled do
             local area=shuffled[idx]; local x,y=area.x+math.random(-20,20),area.y+math.random(-20,20)
             if isDistantFromOtherStars(x,y) then createStar(x,y,math.random()<0.6) end
+            idx=idx+1
         end
     end
 end
@@ -169,18 +168,18 @@ end
 function eventKeyboard(name, key, down)
     if key == 81 then local p=tfm.get.room.playerList[name]; if p then tryPickStar(name,p.x,p.y) end
     elseif key == 72 and down then showHelp(name)
+    elseif key == 27 and down then ui.removeTextArea(999,name); ui.removeTextArea(995,name) end
 end
 
--- 📋 Sistema de ajuda
 function showHelp(name)
     local text = "<p align='center'><font size='12'><b>[== AJUDA ==]</b></font>\n\n<font size='10'>"
     text=text .. "<j>★ VERDES:</j> 2pts (pote)\n<o>★ AMARELAS:</o> 1pt (você)\n\n"
     text=text .. "<b>OBJETIVO:</b> Maior pontuação\n<b>POTE:</b> 20 estrelas = bônus geral!\n\n"
     text=text .. "<b>CONTROLES:</b> [Q] Coletar | [H] Ajuda\n\n"
     text=text .. "<v>Rodada: "..roundNumber.."/"..maxRounds.."</v></font></p>"
+    ui.addTextArea(995, text, name, 100, 80, 600, 240, 0x1A1A1A, 0x7F7F7F, 0.9, true)
 end
 
--- 🎲 Evento aleatório com balanceamento dinâmico
 function applyEvent(name)
     local pCount=0; for _ in pairs(tfm.get.room.playerList) do pCount=pCount+1 end
     if name=="Aurora" then scarcity=math.max(0.5,scarcity-0.1)
@@ -191,7 +190,6 @@ function applyEvent(name)
 end
 
 function tryPickStar(name, x, y)
-    if not x or not y or isGameOver then return end
     if not x or not y or isGameOver then return end
     local pickedIdx, oppositeIdx = nil, nil
     for i=#starList,1,-1 do
@@ -214,21 +212,22 @@ function tryPickStar(name, x, y)
             else table.remove(starList,oppositeIdx); table.remove(starList,pickedIdx) end
         else table.remove(starList,pickedIdx) end
         calculateRoomCooperation(); updateUI()
+        if pot>=20 then endGame() end
     end
 end
 
--- 🏆 Calcula pontuação do jogador
 function calculatePlayerScore(name)
     local pub,priv,bonus = bagPublic[name]or 0,bagPrivate[name]or 0,0
     if pot>=20 then local c=0; for _ in pairs(tfm.get.room.playerList) do c=c+1 end; if c>0 then bonus=math.floor((pot*1.5)/c) end end
     return(pub*2)+priv+bonus
 end
+
 function calculateRoomCooperation()
     local totPub,totPriv = 0,0
     for n in pairs(tfm.get.room.playerList) do totPub=totPub+(bagPublic[n]or 0); totPriv=totPriv+(bagPrivate[n]or 0) end
+    roomCooperation = (totPub+totPriv)>0 and (totPub/(totPub+totPriv)*100) or 0
 end
 
--- 📊 Sistema de logging comportamental
 function logPlayerAction(player, action, data)
     if not gameData[player] then gameData[player]={} end
     table.insert(gameData[player],{p=player,r=roundNumber,a=action,st=data.star_type,pos=data.position,ps=pot,e=eventName,t=os.time()})
@@ -252,7 +251,6 @@ function announceWinner(winner, score, cooperative, individualistic, playerScore
         local pub = bagPublic[pData.name] or 0
         local pri = bagPrivate[pData.name] or 0
         local total = pub + pri
-        local total = pub + pri
         local coop = 0
         if total > 0 then coop = (pub / total) * 100 end
         
@@ -264,15 +262,15 @@ function announceWinner(winner, score, cooperative, individualistic, playerScore
         local starsStr = string.format("<vp>%d</vp>/<o>%d</o>", pub, pri)
         local coopStr = string.format("%.1f%%", coop)
 
-            rankColor,
+        local rankLine = string.format("%s%-3s| %-13s | %-6s | %-14s | %s</n>",
             rankColor,
             rankStr,
             nameStr,
+            scoreStr,
             starsStr,
-            starsStr,
+            coopStr
         )
-        )
-    end
+        text = text .. rankLine .. "\n"
     end
     
     text=text.."</font>\n\n<v>= Coop. Geral: "..string.format("%.1f%%", roomCooperation).." =</v></font></p>"
@@ -288,22 +286,22 @@ function updateUI()
     for n in pairs(tfm.get.room.playerList) do
         local rank,pub,pri,score=ranks[n]or 0,bagPublic[n]or 0,bagPrivate[n]or 0,calculatePlayerScore(n)
         local uiText = string.format("<p align='center'><font face='Verdana' size='11'>" ..
-            "</font></p>",
+            "<n>Rodada:</n> <j>%d/%d</j> | <n>Pote:</n> <j>%d/20</j> | <n>Evento:</n> <j>%s</j> | <n>Rank:</n> <j>%dº</j> | <n>★:</n> <vp>%d</vp>/<o>%d</o> | <n>Pontos:</n> <j>%d</j>" ..
             "</font></p>",
             roundNumber, maxRounds, potVal, eventName, rank, pub, pri, score)
+        ui.addTextArea(0, uiText, n, 0, 380, 800, 20, 0x1A1A1A, 0x1A1A1A, 0.8, true)
     end
 end
 
--- 👤 Novos jogadores
 function eventNewPlayer(name)
     bagPublic[name],bagPrivate[name]=0,0
     playerStats[name]={cooperationRatio=0,totalActions=0,reactionTimes={},spatialPreferences={}}
+    system.bindKeyboard(name,81,true,true); system.bindKeyboard(name,72,true,true); system.bindKeyboard(name,27,true,true)
     updateUI()
 end
 
--- ▶️ Início do mapa (garante XML disponível)
 function eventNewGame()
+    if analyzeMapXML() then isMapReady=true; showTutorial(); spawnAllStarsForRound(); updateUI() end
 end
 
--- ▶️ Start
 init()
