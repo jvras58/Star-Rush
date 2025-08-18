@@ -1,6 +1,6 @@
-# 🎯 Checkpoints de Melhorias - Share Cheese
+# 🎯 Checkpoints de Melhorias - Star Racer
 
-## 🧀 Sistema de Estrelas
+## Sistema de Estrelas
 
 ### [x] Geração Estratégica de Estrelas
 - **Objetivo**: Implementar geração de pares de estrelas (público + privado) próximos
@@ -45,7 +45,7 @@
 
 ## 🏁 Sistema de Finalização
 
-### [] Limite de Rodadas
+### [x] Limite de Rodadas
 - **Objetivo**: Definir número máximo de rodadas (sugestão: 10-15 rodadas)
 - **Implementação**:
   - Adicionar variável `maxRounds` nas configurações
@@ -53,7 +53,7 @@
   - Criar função `endGame()` quando limite for atingido
 - **Prioridade**: Alta
 
-### [] Ceremônia de Encerramento
+### [x] Ceremônia de Encerramento
 - **Objetivo**: Anunciar vencedor e estatísticas finais
 - **Implementação**:
   - Função `announceWinner()` com ranking final
@@ -70,10 +70,6 @@
 - **Objetivo**: Explicar mecânicas para novos jogadores
 - **Implementação**:
   - [x] Função `showTutorial()` no início do jogo
-  - Mensagens explicativas por rodada:
-    - Rodada 1-2: Explicar tipos de queijo
-    - Rodada 3-4: Explicar sistema de pote
-    - Rodada 5+: Explicar eventos
 - **Prioridade**: Média
 - **EllianRodrigues**
 

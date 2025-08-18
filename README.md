@@ -204,6 +204,7 @@ Todas as ações são registradas com:
    /inv [nomejogador#0000]
    ```
    - Os jogadores **não precisam estar na guilda**
+   - Jogadores devem ser amigos
    - Apenas você (host) precisa ter os privilégios
 
 3. **Abra o editor Lua** digitando no chat:
@@ -256,31 +257,17 @@ Todas as ações são registradas com:
 
 ## 🏆 Dicas e Estratégias Avançadas
 
-### 🎯 Para Iniciantes
-1. **Faça o tutorial completo** antes de jogar (tecla T)
-2. **Use o sistema de ajuda** durante o jogo (tecla H)
-3. **Observe outros jogadores** para aprender estratégias
-4. **Comece focando estrelas privados** para segurança
-5. **Gradualmente coopere mais** conforme entende o jogo
-
-### 🧠 Para Jogadores Experientes
-1. **Monitore o ranking em tempo real** para ajustar estratégia
-2. **Antecipe eventos** e adapte coleta accordingly
-3. **Coordene com outros jogadores** para maximizar potes
-4. **Use pares de estrelas públicos** para eficiência máxima
-5. **Balance individual vs cooperativo** baseado na situação
-
-### 🤝 Para Grupos Organizados
-1. **Designem roles** (coletores públicos/privados)
-2. **Comuniquem no chat** sobre metas de pote
-3. **Rotem estratégias** entre rodadas
-4. **Analisem dados do ranking** para melhorar
-5. **Experimentem diferentes composições** de jogadores
+1. **Use o sistema de ajuda** durante o jogo (tecla H)
+2. **Comece focando estrelas privados** para segurança
+3. **Gradualmente coopere mais** conforme entende o jogo
+4. **Coordene com outros jogadores** para maximizar potes
+5. **Use pares de estrelas públicos** para eficiência máxima
+6. **Balance individual vs cooperativo** baseado na situação
+7. **Comuniquem no chat** sobre metas de pote
 
 ### 📈 Análise de Performance
 - **Acompanhe seu score** ao longo das rodadas
 - **Compare cooperação** com outros jogadores
-- **Identifique padrões** nos eventos que mais te afetam
 - **Ajuste timing** de coleta baseado no ranking
 - **Use analytics** para melhorar estratégia a longo prazo
 
@@ -296,7 +283,7 @@ Desenvolvido como um experimento avançado em jogos cooperativos e teoria dos jo
 - **Design de sistemas** que promovem tanto competição quanto cooperação
 
 ### 🔬 Aspectos Teóricos Implementados
-- **Dilema do Prisioneiro Iterado**: Através do sistema de pote compartilhado
+- **Dilema dos bens publicos Iterado**: Através do sistema de pote compartilhado
 - **Teoria dos Jogos Evolutivos**: Sistema de ranking e adaptação de estratégias
 - **Economia Comportamental**: Eventos aleatórios que afetam tomada de decisão
 - **Psicologia Social**: Tutorial e sistema de ajuda para inclusão de novos jogadores
@@ -312,11 +299,8 @@ Desenvolvido como um experimento avançado em jogos cooperativos e teoria dos jo
 ### 📊 Funcionalidades Implementadas
 - ✅ **Sistema de Ranking Avançado** com múltiplas métricas
 - ✅ **Analytics e Logging Detalhado** para análise comportamental
-- ✅ **Tutorial Interativo** para onboarding de novos jogadores
 - ✅ **Sistema de Ajuda Integrado** sempre acessível
 - ✅ **Spawn Estratégico** de estrelas em pares para cooperação
-- ✅ **Coleta Automática** com feedback visual aprimorado
-- ✅ **Balanceamento Dinâmico** baseado no número de jogadores
 - ✅ **Interface Responsiva** com informações em tempo real
 - ✅ **Sistema de Performance** otimizado para múltiplos jogadores
 
